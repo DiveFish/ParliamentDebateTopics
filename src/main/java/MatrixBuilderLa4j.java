@@ -1,12 +1,17 @@
 package parliamentdebatetopics;
 
 import gnu.trove.list.TIntList;
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import org.annolab.tt4j.TreeTaggerException;
-import org.ujmp.core.Matrix;
+import org.la4j.Matrix;
+import org.la4j.decomposition.SingularValueDecompositor;
+import org.la4j.matrix.SparseMatrix;
 
 /**
  * Construct a term-document and tf.idf matrix and svd matrices from the 
@@ -17,7 +22,7 @@ import org.ujmp.core.Matrix;
  *
  * @author Daniël de Kok and Patricia Fischer
  */
-public class MatrixBuilder {
+public class MatrixBuilderLa4j {
 
     private static final int STOPWORD_LIST_SIZE = 0; //150
 
@@ -35,26 +40,41 @@ public class MatrixBuilder {
         Set<Integer> mostFrequent = mostFrequentTokens(vocabulary.tokenCounts(), STOPWORD_LIST_SIZE);
         
         // Create term-document matrix of debates
-        TermDocumentMatrix termDocMatrix = new TermDocumentMatrix(layer, vocabulary.documentIndices(),
+        TermDocumentMatrixLa4j termDocMatrix = new TermDocumentMatrixLa4j(layer, vocabulary.documentIndices(),
                 vocabulary.tokenIndices(), mostFrequent);
         termDocMatrix.processDebates(pol.getDebates());
-        Matrix termDocumentMatrix = termDocMatrix.counts();
+        SparseMatrix termDocumentMatrix = termDocMatrix.counts();
         System.out.println("Visualizing term document matrix");
-        System.out.println(termDocumentMatrix);
+        System.out.println(termDocumentMatrix.toCSV());
         
         // Transform term-document matrix into td.idf matrix
-        Matrix tfIdfMatrix = termDocMatrix.tfIdf(termDocumentMatrix);
+        SparseMatrix tfIdfMatrix = termDocMatrix.tfIdf(termDocumentMatrix);
         System.out.println("Visualizing td.idf matrix");
         System.out.println(tfIdfMatrix);
         
+        
+        Locale.setDefault(Locale.Category.FORMAT, Locale.ENGLISH); // necessary to display doubles with dot, not comma (messes up csv format)
+        
+        System.out.println("Saving term document matrix to csv");
+        try (PrintWriter pw1 = new PrintWriter(new File("TermDocMatrix.csv"))) {
+            pw1.write(termDocumentMatrix.toCSV());
+        }
+        
+        System.out.println("Saving tf.idf matrix to csv");
+        try (PrintWriter pw2 = new PrintWriter(new File("TfIdfMatrices.csv"))) {
+            pw2.write(tfIdfMatrix.toCSV());
+            pw2.close();
+        }    
+        
         /*
-        // Decompose tf.idf matrix by applying singular-value decomposition        
-        Matrix[] svdMatrix = tdfIdfMatrix.svd();
+        // Decompose tf.idf matrix by applying singular-value decomposition
+        SingularValueDecompositor svd = new SingularValueDecompositor(tfIdfMatrix);
         System.out.println("Visualizing svd matrices");
-        for(Matrix m : svdMatrix){
+        for(Matrix m : svd.decompose()){
             System.out.println(m);
         }
-        */
+            */
+        
         
     }
 
