@@ -48,15 +48,30 @@ public class TermDocumentMatrix {
         tfIdf = SparseMatrix.Factory.zeros(documentIndices.size(), tokenIndices.size());
     }
 
+    /**
+     *
+     * @return
+     */
     public Matrix counts() {
         return counts;
     }
     
+    /**
+     *
+     * @param matrix
+     * @return
+     */
     public Matrix tfIdf(Matrix matrix) {
         countsToTfIdf(counts);
         return tfIdf;
     }
 
+    /**
+     *
+     * @param debates
+     * @throws IOException
+     * @throws TreeTaggerException
+     */
     public void processDebates(HashMap<String, List<DebateSection>> debates) throws IOException, TreeTaggerException{
         for (Map.Entry<String, List<DebateSection>> debate : debates.entrySet())
         {
@@ -88,6 +103,7 @@ public class TermDocumentMatrix {
                 }
             }
         }
+        
         /*// only to check content of hashMap
         for (Map.Entry<Integer, TIntList> docFreq : documentFrequencies.entrySet()){
             System.out.println(docFreq);
@@ -95,6 +111,13 @@ public class TermDocumentMatrix {
         */
     }
 
+    /**
+     * 
+     * @param sectionContent
+     * @return
+     * @throws IOException
+     * @throws TreeTaggerException 
+     */
     private List<Integer> tokensToIndices(List<String> sectionContent) throws IOException, TreeTaggerException {
         List<Integer> indices = new ArrayList<>();
 
@@ -125,9 +148,9 @@ public class TermDocumentMatrix {
         long numDocs = matrix.getRowCount();
         for (int i = 0; i < matrix.getColumnCount(); i++) {
             for(int j = 0; j < matrix.getRowCount(); j++){
-                if (documentFrequencies.get(i).size()>0){
+                if (documentFrequencies.get(j).size()>0){
                     tfIdf.setAsDouble(matrix.getAsDouble(i,j)*
-                        Math.log(numDocs/documentFrequencies.get(i).size()),i,j);
+                        Math.log(numDocs/documentFrequencies.get(j).size()),i,j);
                 }
             }
         }
