@@ -9,10 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.annolab.tt4j.TreeTaggerException;
-import org.la4j.Vector;
 import org.la4j.matrix.SparseMatrix;
 import org.la4j.matrix.sparse.CCSMatrix;
-import org.la4j.vector.SparseVector;
 import parliamentdebatetopics.PolmineReader.DebateSection;
 
 /**
@@ -39,6 +37,14 @@ public class TermDocumentMatrixLa4j {
     
     private final SparseMatrix tfIdf;
 
+    /**
+     *
+     * @param layer
+     * @param documentIndices
+     * @param tokenIndices
+     * @param mostFrequent
+     * @throws IOException
+     */
     public TermDocumentMatrixLa4j(String layer, Map<String, Integer> documentIndices, Map<String, Integer> tokenIndices,
                                      Set<Integer> mostFrequent) throws IOException {
         this.layer = layer;
@@ -50,15 +56,30 @@ public class TermDocumentMatrixLa4j {
         tfIdf = CCSMatrix.zero(documentIndices.size(), tokenIndices.size());
     }
 
+    /**
+     *
+     * @return
+     */
     public SparseMatrix counts() {
         return counts;
     }
     
+    /**
+     *
+     * @param matrix
+     * @return
+     */
     public SparseMatrix tfIdf(SparseMatrix matrix) {
         countsToTfIdf(counts);
         return tfIdf;
     }
 
+    /**
+     *
+     * @param debates
+     * @throws IOException
+     * @throws TreeTaggerException
+     */
     public void processDebates(HashMap<String, List<DebateSection>> debates) throws IOException, TreeTaggerException{
         for (Map.Entry<String, List<DebateSection>> debate : debates.entrySet())
         {
@@ -82,7 +103,7 @@ public class TermDocumentMatrixLa4j {
                 }
             }
         }
-        /*// only to check content of hashMap
+        /*// to check content of documentFrequencies HashMap
         for (Map.Entry<Integer, TIntList> docFreq : documentFrequencies.entrySet()){
             System.out.println(docFreq);
         }
@@ -119,10 +140,12 @@ public class TermDocumentMatrixLa4j {
         int numDocs = matrix.rows();
         for (int i = 0; i < numDocs; i++) {
             for(int j = 0; j < matrix.columns(); j++){
-                if (documentFrequencies.get(i).size()>0){
-                    tfIdf.set(i, j, matrix.get(i,j)*
-                        Math.log(numDocs/documentFrequencies.get(i).size()));
-                            
+                if (!(documentFrequencies.get(j)==null)){
+                    if (documentFrequencies.get(j).size()>0){
+                        tfIdf.set(i, j, matrix.get(i,j)*
+                            Math.log(numDocs/documentFrequencies.get(j).size()));
+
+                    }
                 }
             }
         }

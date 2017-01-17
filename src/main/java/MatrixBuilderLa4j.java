@@ -24,9 +24,18 @@ import org.la4j.matrix.SparseMatrix;
  */
 public class MatrixBuilderLa4j {
 
-    private static final int STOPWORD_LIST_SIZE = 0; //150
+    private static final int STOPWORD_LIST_SIZE = 2; //150
 
+    /**
+     *
+     * @param args
+     * @throws IOException
+     * @throws TreeTaggerException
+     */
     public static void main(String[] args) throws IOException, TreeTaggerException {
+        
+        // Locale change necessary to display doubles with dot, not comma (messes up csv format)
+        Locale.setDefault(Locale.Category.FORMAT, Locale.ENGLISH);
         
         // Read xml files and save them into debate objects
         PolmineReader pol = new PolmineReader();
@@ -51,10 +60,7 @@ public class MatrixBuilderLa4j {
         SparseMatrix tfIdfMatrix = termDocMatrix.tfIdf(termDocumentMatrix);
         System.out.println("Visualizing td.idf matrix");
         System.out.println(tfIdfMatrix);
-        
-        
-        Locale.setDefault(Locale.Category.FORMAT, Locale.ENGLISH); // necessary to display doubles with dot, not comma (messes up csv format)
-        
+                
         System.out.println("Saving term document matrix to csv");
         try (PrintWriter pw1 = new PrintWriter(new File("TermDocMatrix.csv"))) {
             pw1.write(termDocumentMatrix.toCSV());
@@ -74,8 +80,6 @@ public class MatrixBuilderLa4j {
             System.out.println(m);
         }
             */
-        
-        
     }
 
     /**
