@@ -39,12 +39,12 @@ public class MatrixMeasures {
      * @return The cosine similarity between v1 and v2
      */
     public static double cosineSimilarity(Vector v1, Vector v2){
-        MutableDouble dp = new MutableDouble();
+        double dp = 0;
         for (int i = 0; i < v1.length(); i++) {
-            dp.add(v1.get(i) * v2.get(i));
+            dp += v1.get(i) * v2.get(i);
         }
         
-        return dp.doubleValue() / (v1.norm() * v2.norm());
+        return dp / (v1.norm() * v2.norm());
     }
     
     /**
@@ -54,11 +54,11 @@ public class MatrixMeasures {
      * @return The euclidean distance between v1 and v2
      */
     public static double euclideanDistance(Vector v1, Vector v2){
-        MutableDouble euc = new MutableDouble();
+        double euc = 0;
         for (int i = 0; i < v1.length(); i++){
-            euc.add(Math.pow(v2.get(i) - v1.get(i),2));
+            euc += Math.pow(v2.get(i) - v1.get(i),2);
         } 
         
-        return Math.sqrt(euc.doubleValue());
+        return Math.sqrt(euc);
     }
 }
