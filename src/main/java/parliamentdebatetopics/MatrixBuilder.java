@@ -26,9 +26,9 @@ public class MatrixBuilder {
     private static final int STOPWORD_LIST_SIZE = 150;//150;
     private static final int MAX_VOCAB_SIZE = 500000;
     private static final Layer LAYER = Layer.TOKEN;  //options: TOKEN or LEMMA
-    //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/src/bundesparser-xml-tokenized/";
-    //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/src/bundesparser-xml-tokenized-samples/";
-    //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/src/testFiles/";
+    //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized/";
+    //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized-samples/";
+    //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/testFiles/";
 
     /**
      *
@@ -44,11 +44,12 @@ public class MatrixBuilder {
             System.out.println("Wrong number of arguments.\nUsage: 1, provide path to data files");
         }
         
-        File filesDir = new File(args[0]);//(FILE_DIR);
+        File filesDir = new File(args[0]);
+        //File filesDir = new File(FILE_DIR);
         File[] files = filesDir.listFiles();
         
         // Read xml files and save them into debate objects
-        PolmineReader pol = new PolmineReader();
+        PolMineReader pol = new PolMineReader();
         Vocabulary vocabulary = new Vocabulary(LAYER);
         TermDocumentMatrix tdm = new TermDocumentMatrix(LAYER, files.length, MAX_VOCAB_SIZE);
         
@@ -70,8 +71,7 @@ public class MatrixBuilder {
         tdm.removeMostFrequent(mostFrequent);
         
         System.out.println("Visualizing term document matrix");
-        System.out.println(tdm.counts());
-        //System.out.println(tdm.counts().toCSV());
+        //System.out.println(tdm.counts());
                 
         System.out.println("Saving term document matrix to csv");
         try (PrintWriter pw1 = new PrintWriter(new File("./TermDocMatrix.csv"))) {
@@ -80,8 +80,8 @@ public class MatrixBuilder {
         
         // Transform term-document matrix into td.idf matrix
         tdm.tfIdf(vocabulary.documentFrequencies());
-        System.out.println("Visualizing td.idf matrix");
-        System.out.println(tdm.counts());
+        //System.out.println("Visualizing td.idf matrix");
+        //System.out.println(tdm.counts());
         
         System.out.println("Saving tf.idf matrix to csv");
         try (PrintWriter pw2 = new PrintWriter(new File("TfIdfMatrices.csv"))) {

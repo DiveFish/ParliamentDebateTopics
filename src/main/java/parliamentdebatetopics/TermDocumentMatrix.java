@@ -73,14 +73,14 @@ public class TermDocumentMatrix {
      * @param tokenIndices
      * @throws IOException
      */
-    public void processDebate(String fileID, List<PolmineReader.DebateSection> debate, Map<String, Integer> documentIndices, Map<String, Integer> tokenIndices) throws IOException {
+    public void processDebate(String fileID, List<PolMineReader.DebateSection> debate, Map<String, Integer> documentIndices, Map<String, Integer> tokenIndices) throws IOException {
         
         Integer fileIDIndex = documentIndices.get(fileID);
         if (fileIDIndex == null) {
             throw new IOException(String.format("Unknown file ID: %s", fileID));
         }
 
-        for (PolmineReader.DebateSection section : debate){
+        for (PolMineReader.DebateSection section : debate){
             for (Integer token : tokensToIndices(section.contributionContent(), tokenIndices)) {
                 counts.set(fileIDIndex, token, counts.get(fileIDIndex, token)+1);
             }

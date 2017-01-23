@@ -7,7 +7,7 @@ import gnu.trove.list.array.TIntArrayList;
 import java.io.IOException;
 import java.util.List;
 
-import parliamentdebatetopics.PolmineReader.DebateSection;
+import parliamentdebatetopics.PolMineReader.DebateSection;
 import java.util.HashMap;
 import java.util.Map;
 
