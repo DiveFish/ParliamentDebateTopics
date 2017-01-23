@@ -2,15 +2,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.mycompany</groupId>
-    <artifactId>debateTopics</artifactId>
+    <artifactId>ParliamentDebateTopics</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
-    </properties>
-    <name>ParliamentDebateTopics</name>    
     <build>
       <plugins>
 	  <plugin>
@@ -21,7 +15,7 @@
 		  </descriptorRefs>
 		  <archive>
 		      <manifest>
-			  <mainClass>debatetopics.MatrixBuilderSized</mainClass>
+			  <mainClass>parliamentdebatetopics.MatrixBuilder</mainClass>
 		      </manifest>
 		  </archive>
 	      </configuration>
@@ -38,12 +32,6 @@
       </plugins>
     </build>
     <dependencies>
-        <dependency>
-            <groupId>com.google.collections</groupId>
-            <artifactId>google-collections</artifactId>
-            <version>1.0</version>
-            <type>jar</type>
-        </dependency>
         <dependency>
             <groupId>net.sf.trove4j</groupId>
             <artifactId>trove4j</artifactId>
@@ -63,4 +51,9 @@
             <type>jar</type>
         </dependency>
     </dependencies>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+    </properties>
 </project>
