@@ -1,132 +1,114 @@
 package parliamentdebatetopics;
 
+import com.google.common.collect.ContiguousSet;
+import com.google.common.collect.DiscreteDomain;
+import com.google.common.collect.Range;
+import com.google.common.primitives.Ints;
 import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.annolab.tt4j.TreeTaggerException;
-import org.ujmp.core.Matrix;
-import org.ujmp.core.SparseMatrix;
-import parliamentdebatetopics.PolmineReader.DebateSection;
+import org.la4j.matrix.SparseMatrix;
+import org.la4j.matrix.sparse.CCSMatrix;
 
 /**
- * Create a term-document and tf.idf matrix from the Polmine debates. All debates
- * and the vocabulary extracted from the debates are associated with indices
- * that can be used to construct the term-document matrix. A term's document
- * frequency is kept track of in a separate map to make retrieval of the numbers
- * faster.
  *
  * @author Daniël de Kok and Patricia Fischer
  */
 public class TermDocumentMatrix {
-    private final String layer;
 
-    private final Map<String, Integer> documentIndices;
-
-    private final Map<String, Integer> tokenIndices;
+    private final Layer layer;
     
-    private final Map<Integer, TIntList> documentFrequencies;
-
-    private final Set<Integer> mostFrequent;
-
-    private final Matrix counts;
+    private static SparseMatrix counts;
     
-    private final Matrix tfIdf;
-
-    public TermDocumentMatrix(String layer, Map<String, Integer> documentIndices, Map<String, Integer> tokenIndices,
-                                     Set<Integer> mostFrequent) throws IOException {
+    
+    public TermDocumentMatrix(Layer layer, Integer numOfDocs, Integer maxVocabSize) {
         this.layer = layer;
-        this.documentIndices = documentIndices;
-        this.tokenIndices = tokenIndices;
-        this.mostFrequent = mostFrequent;
-        documentFrequencies = new HashMap<>();
-        counts = SparseMatrix.Factory.zeros(documentIndices.size(), tokenIndices.size());
-        tfIdf = SparseMatrix.Factory.zeros(documentIndices.size(), tokenIndices.size());
+        counts = CCSMatrix.zero(numOfDocs, maxVocabSize);
     }
-
+    
     /**
      *
      * @return
      */
-    public Matrix counts() {
+    public SparseMatrix counts() {
         return counts;
     }
     
     /**
      *
-     * @param matrix
-     * @return
+     * @param documentFrequencies
      */
-    public Matrix tfIdf(Matrix matrix) {
-        countsToTfIdf(counts);
-        return tfIdf;
+    public void tfIdf(Map<Integer, TIntList> documentFrequencies) {
+        countsToTfIdf(documentFrequencies);
     }
-
+    
     /**
      *
-     * @param debates
-     * @throws IOException
-     * @throws TreeTaggerException
+     * @param fromCol
      */
-    public void processDebates(HashMap<String, List<DebateSection>> debates) throws IOException, TreeTaggerException{
-        for (Map.Entry<String, List<DebateSection>> debate : debates.entrySet())
-        {
-            Integer fileID = documentIndices.get(debate.getKey());
-            if (fileID == null) {
-                throw new IOException("Unknown file ID: " + debate.getKey());
-            }
-            
-            if (fileID==0){
-                counts.setRowLabel(fileID, "0.0");
-            }
-            else{
-                counts.setRowLabel(fileID,fileID);
-            }
-            
-            for (DebateSection section : debate.getValue()){
-                for (Integer token : tokensToIndices(section.contributionContent())) {
-                    if (!mostFrequent.contains(token)) {
-                        counts.setAsDouble(counts.getAsDouble(fileID, token)+1, fileID, token);
-                        counts.setColumnLabel(token, token);
-                        
-                        if (!documentFrequencies.containsKey(token)) {
-                            documentFrequencies.putIfAbsent(token, new TIntArrayList());
-                        }
-                        if (!documentFrequencies.get(token).contains(fileID)){
-                            documentFrequencies.get(token).add(fileID);
-                        }
-                    }
-                }
-            }
-        }
+    public void removeEmptyRows(Integer fromCol){
+        int[] selRows = Ints.toArray(ContiguousSet.create(Range.closed(0, counts.rows()-1), DiscreteDomain.integers()));
+        int[] selCols = Ints.toArray(ContiguousSet.create(Range.closed(0, fromCol), DiscreteDomain.integers()));
+        counts = (SparseMatrix) counts.select(selRows, selCols);
+    }
         
-        /*// only to check content of hashMap
-        for (Map.Entry<Integer, TIntList> docFreq : documentFrequencies.entrySet()){
-            System.out.println(docFreq);
+    /**
+     *
+     * @param mostFrequent
+     */
+    public void removeMostFrequent(Set<Integer> mostFrequent){
+        for(int i : mostFrequent){
+            counts.setColumn(i,0);
         }
-        */
+    }
+    
+    /**
+     *
+     * @param fileID
+     * @param debate
+     * @param documentIndices
+     * @param tokenIndices
+     * @throws IOException
+     */
+    public void processDebate(String fileID, List<PolmineReader.DebateSection> debate, Map<String, Integer> documentIndices, Map<String, Integer> tokenIndices) throws IOException {
+        
+        Integer fileIDIndex = documentIndices.get(fileID);
+        if (fileIDIndex == null) {
+            throw new IOException(String.format("Unknown file ID: %s", fileID));
+        }
+
+        for (PolmineReader.DebateSection section : debate){
+            for (Integer token : tokensToIndices(section.contributionContent(), tokenIndices)) {
+                counts.set(fileIDIndex, token, counts.get(fileIDIndex, token)+1);
+            }
+        }
     }
 
     /**
      * 
      * @param sectionContent
+     * @param tokenIndices
      * @return
-     * @throws IOException
-     * @throws TreeTaggerException 
+     * @throws IOException 
      */
-    private List<Integer> tokensToIndices(List<String> sectionContent) throws IOException, TreeTaggerException {
+    private List<Integer> tokensToIndices(List<String> sectionContent, Map<String, Integer> tokenIndices) throws IOException {
+        
         List<Integer> indices = new ArrayList<>();
 
-        if (layer.equals("lemma")){
-            Lemmas lems = new Lemmas();        
-            sectionContent = lems.lemmatizeDebateSection(sectionContent);
+        switch(layer)
+        {
+            case LEMMA:
+                //TODO: add lemma/token behaviour differentiation
+                break;
+            case TOKEN:
+                //TODO: add lemma/token behaviour differentiation
+                break;
+            default:
+                System.out.println("Provide level of extraction, choose between \"TOKEN\" and \"LEMMA\"");
         }
-        else if (!layer.equals("form"))
-            System.out.println("Provide level of extraction, choose between \"lemma\" and \"form\"");
 
         for (String token : sectionContent) {
             Integer idx = tokenIndices.get(token);
@@ -134,7 +116,6 @@ public class TermDocumentMatrix {
                 throw new IOException(String.format("Token not in vocabulary: %s", token));
             }
             indices.add(idx);
-            //System.out.println("\""+token+"\" index: "+idx);  // to check which word is assigned which index
         }
 
         return indices;
@@ -142,15 +123,13 @@ public class TermDocumentMatrix {
     
     /**
      * 
-     * @param matrix The term-document matrix to be transformed into a tf.idf matrix
      */
-    private void countsToTfIdf(Matrix matrix) {
-        long numDocs = matrix.getRowCount();
-        for (int i = 0; i < matrix.getColumnCount(); i++) {
-            for(int j = 0; j < matrix.getRowCount(); j++){
-                if (documentFrequencies.get(j).size()>0){
-                    tfIdf.setAsDouble(matrix.getAsDouble(i,j)*
-                        Math.log(numDocs/documentFrequencies.get(j).size()),i,j);
+    private void countsToTfIdf(Map<Integer, TIntList> documentFrequencies) {
+        for (int i = 0; i < counts.rows(); i++) {
+            for(int j = 0; j < counts.columns(); j++){
+                if (!(documentFrequencies.get(j) == null)){
+                    counts.set(i, j, counts.get(i,j) *
+                        Math.log(counts.rows()/documentFrequencies.get(j).size()));
                 }
             }
         }

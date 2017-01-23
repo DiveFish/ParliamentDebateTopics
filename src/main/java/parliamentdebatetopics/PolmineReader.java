@@ -3,7 +3,6 @@ package parliamentdebatetopics;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -23,55 +22,45 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class PolmineReader {
     
-    private final HashMap<String, List<DebateSection>> debates;
-    private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/src/bundesparser-xml-tokenized/";
-    
-    public PolmineReader(){
-        debates = new HashMap();
-    }
-    
-    public HashMap<String, List<DebateSection>> getDebates(){
-        return debates;
-    }
+    private static List<DebateSection> debate;
+    private static String fileName;
     
     /**
      *
+     * @param inputFile The directory which stores the xml files
      * @throws IOException
      */
-    public void constructDebates() throws IOException{
-        try {            
-            //String[] files = FileLoader.getFileNames(); //whole corpus
-            String[] files = FileLoader.getSelectedFileNames(); //selection from corpus
-            //String[] files = FileLoader.getTestFiles(); //correct xml format with little content for faster processing
-            for(String fileName : files){
-                File file = new File(FILE_DIR+fileName);
-                fileName = file.getName();
-                System.out.println("Parsing file "+fileName+"...");
-                SAXParserFactory factory = SAXParserFactory.newInstance();
-                factory.setNamespaceAware(false);
-                factory.setValidating(false);
-                factory.setXIncludeAware(false);
-                
-                SAXParser saxParser = factory.newSAXParser();
-                XMLHandler xmlHandler = new XMLHandler();
-                saxParser.parse(file, xmlHandler);
-                
-                List<DebateSection> debate = xmlHandler.debate();
-                
-                // only to print and check results
-                for(DebateSection section : debate){
-                    StringBuilder contribution = new StringBuilder();
-                    for(String word : section.contributionContent()){
-                        word += " ";
-                        contribution.append(word);
-                    }
-                }
-                debates.put(fileName, debate);
+    public void constructDebate(File inputFile) throws IOException{
+        try {
+            
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            factory.setNamespaceAware(false);
+            factory.setValidating(false);
+            factory.setXIncludeAware(false);
+
+            SAXParser saxParser = factory.newSAXParser();
+            XMLHandler xmlHandler = new XMLHandler();
+            
+            fileName = inputFile.getName();
+            if (fileName.endsWith(".xml")){
+                  System.out.println(String.format("Parsing file %s ...",fileName));
+                  saxParser.parse(inputFile, xmlHandler);
+                  debate = xmlHandler.debate();
             }
+            
         } catch (ParserConfigurationException | SAXException | IOException e) {
             throw new IOException(e);
         }
-   }
+    }
+    
+    public List<DebateSection> getDebate(){
+        return debate;
+    }
+    
+    public String getFileID(){
+        return fileName;
+    }
+    
 
     private class XMLHandler extends DefaultHandler {
 

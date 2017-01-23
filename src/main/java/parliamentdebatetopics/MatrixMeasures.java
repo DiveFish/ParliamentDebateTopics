@@ -1,8 +1,6 @@
 package parliamentdebatetopics;
 
-import org.apache.commons.lang3.mutable.MutableDouble;
 import org.la4j.Vector;
-import org.la4j.vector.SparseVector;
 
 /**
  * Apply basic measures on vectors retrieved from a matrix.
@@ -11,25 +9,6 @@ import org.la4j.vector.SparseVector;
  */
 public class MatrixMeasures {
     
-    /* //To check functionality of MatrixMeasures
-    private final static Vector v1 = SparseVector.zero(4);
-    private final static Vector v2 = SparseVector.zero(4);
-    
-    public static void main(String[] args) {
-        v1.set(0,2);
-        v1.set(1,2);
-        v1.set(2,2);
-        v1.set(3,2);
-        v2.set(0,1);
-        v2.set(1,1);
-        v2.set(2,1);
-        v2.set(3,1);
-        
-        System.out.println(cosineSimilarity(v1,v2));
-        System.out.println(euclideanDistance(v1,v2));
-    }
-    */
-
     /**
      * Calculate the cosine similarity between two vectors. The dot product is
      * divided by the length of the vectors. The norm() method on a Vector

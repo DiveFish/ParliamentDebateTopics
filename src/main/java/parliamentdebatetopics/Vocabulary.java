@@ -5,15 +5,14 @@ import com.google.common.collect.HashBiMap;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import org.annolab.tt4j.TreeTaggerException;
 
 import parliamentdebatetopics.PolmineReader.DebateSection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Build a vocabulary from text input. Associate each word (lemma or word form)
+ * Build a vocabulary from text input. Associate each word (lemma or token)
  * and each document with an index.
  * 
  * @author Daniël de Kok and Patricia Fischer
@@ -22,74 +21,67 @@ public class Vocabulary {
 
     private final BiMap<String, Integer> documentIndices;
     private final BiMap<String, Integer> tokenIndices;
-    private final TIntList tokenCounts;
-    private final String layer;
+    private final Map<Integer, TIntList> documentFrequencies;
+    private final TIntList tokenCounts;  //for getting the most frequent tokens/ stopwords
+    private final Layer layer;
 
     public Vocabulary() {
         documentIndices = HashBiMap.create();
         tokenIndices = HashBiMap.create();
+        documentFrequencies = new HashMap();
         tokenCounts = new TIntArrayList();
-        layer = "lemma";  // change to "form" if you want to process tokens, not types
+        layer = null;
     }
     
     /**
-     * 
-     * Layer "lemma" will lemmatize the input text and process word types.
-     * Layer "form" will skip lemmatization and process the input by tokens.
-     * @param layer
+     * Switch between LEMMA and TOKEN layer.
+     * Layer LEMMA will lemmatize the input text and process word types.
+     * Layer TOKEN will skip lemmatization and process the input by tokens.
+     * @param layer The layer of word extraction
      */
     
-    public Vocabulary(String layer) {
+    public Vocabulary(Layer layer) {
         documentIndices = HashBiMap.create();
         tokenIndices = HashBiMap.create();
+        documentFrequencies = new HashMap();
         tokenCounts = new TIntArrayList();
         this.layer = layer;
-    }
-
-    /**
-     *
-     * @return
-     */
-    public BiMap<String, Integer> documentIndices() {
-        return documentIndices;
     }
 
     /**
      * Step through debates, process content of each debate section and save 
      * file ID for each debate.
      * Process ALL debates to have access to the file ID.
-     * @param debates
+     * @param fileID The file name of the debate
+     * @param debate The debate sections and their respective metadata
      * @throws IOException
-     * @throws TreeTaggerException
      */
-    public void processDebates(HashMap<String, List<DebateSection>> debates) throws IOException, TreeTaggerException{
+    public void processDebate(String fileID, List<DebateSection> debate) throws IOException {
         System.out.println("Processing debate vocabulary...");
-        for (Map.Entry<String, List<DebateSection>> debate : debates.entrySet())
-        {
-            for(DebateSection section : debate.getValue())
-                extractVocabulary(section.contributionContent(), layer);
-            extractFileID(debate.getKey());
-            System.out.println("Done with vocab in file "+debate.getKey());
+        extractFileID(fileID);
+        for(DebateSection section : debate){
+            extractVocabulary(section.contributionContent(), documentIndices.get(fileID));
         }
+        System.out.println(String.format("Done with vocab in file %s", fileID));
+        
     }
     
     /**
-     * Extract tokens from text, process them either as lemmas or as unchanged
-     * word form. Save them in a vocabulary map which also keeps track of the
-     * word count (lemma: types, word form: tokens).
-     * @param sectionContent
-     * @param layer
+     * Extract tokens from text, process them either as lemmas or tokens.
+     * Save them in a vocabulary map which also keeps track of the
+     * count of lemmas or tokens.
+     * @param sectionContent The content of a debate section
      */
-    private void extractVocabulary(List<String> sectionContent, String layer) throws IOException, TreeTaggerException {
+    private void extractVocabulary(List<String> sectionContent, Integer fileIDIndex) throws IOException {
         switch (layer) {
-            case "lemma":
-                Lemmas lems = new Lemmas();
-                sectionContent = lems.lemmatizeDebateSection(sectionContent);
+            case TOKEN:
+                //TODO: add lemma/token behaviour differentiation
                 break;
-            case "form":
+            case LEMMA:
+                //TODO: add lemma/token behaviour differentiation
                 break;
             default:
-                System.out.println("Provide level of extraction, choose between \"lemma\" and \"form\"");
+                System.out.println("Provide level of extraction, choose between \"TOKEN\" and \"LEMMA\"");
                 break;
         }
 
@@ -103,12 +95,20 @@ public class Vocabulary {
             else {
                 tokenCounts.set(index, tokenCounts.get(index) + 1);
             }
+            
+            //Add all document indices to document index list of respective token to obtain token's document frequency
+            if (!documentFrequencies.containsKey(index)) {
+                documentFrequencies.putIfAbsent(index, new TIntArrayList());
+            }
+            if (!documentFrequencies.get(index).contains(fileIDIndex)){
+                documentFrequencies.get(index).add(fileIDIndex);
+            }
         }
     }
 
     /**
      * 
-     * @param debateID 
+     * @param debateID The file name of the debate
      */
     private void extractFileID(String debateID) {
         if (documentIndices == null) {
@@ -121,15 +121,32 @@ public class Vocabulary {
      *
      * @return
      */
-    public TIntList tokenCounts() {
-        return tokenCounts;
+    public BiMap<String, Integer> documentIndices() {
+        return documentIndices;
     }
 
     /**
      *
-     * @return
+     * @return The tokens and their associated indices
      */
     public BiMap<String, Integer> tokenIndices() {
         return tokenIndices;
     }
+    
+    /**
+     *
+     * @return
+     */
+    public Map<Integer, TIntList> documentFrequencies() {
+        return documentFrequencies;
+    }
+    
+    /**
+     *
+     * @return The list of token counts
+     */
+    public TIntList tokenCounts() {
+        return tokenCounts;
+    }
+
 }
