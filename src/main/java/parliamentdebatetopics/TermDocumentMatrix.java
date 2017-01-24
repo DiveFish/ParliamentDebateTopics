@@ -1,17 +1,12 @@
 package parliamentdebatetopics;
 
-import com.google.common.collect.ContiguousSet;
-import com.google.common.collect.DiscreteDomain;
-import com.google.common.collect.Range;
-import com.google.common.primitives.Ints;
-import gnu.trove.list.TIntList;
+import com.google.common.collect.BiMap;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import org.la4j.matrix.SparseMatrix;
-import org.la4j.matrix.sparse.CCSMatrix;
+import org.la4j.Vector;
+import org.la4j.vector.SparseVector;
 
 /**
  *
@@ -21,70 +16,59 @@ public class TermDocumentMatrix {
 
     private final Layer layer;
     
-    private static SparseMatrix counts;
+    private final BiMap<String, Integer> documentIndices;
+    private final BiMap<String, Integer> tokenIndices;
+    private final Set<Integer> mostFrequent;
+    
+    private static Vector docVec;
     
     
-    public TermDocumentMatrix(Layer layer, Integer numOfDocs, Integer maxVocabSize) {
+    public TermDocumentMatrix(Layer layer, BiMap<String, Integer> documentIndices, BiMap<String, Integer> tokenIndices, Set<Integer> mostFrequent) {
         this.layer = layer;
-        counts = CCSMatrix.zero(numOfDocs, maxVocabSize);
+        this.documentIndices = documentIndices;
+        this.tokenIndices = tokenIndices;
+        this.mostFrequent = mostFrequent;
     }
     
     /**
      *
      * @return
      */
-    public SparseMatrix counts() {
-        return counts;
+    public Vector docVec() {
+        return docVec;
     }
     
     /**
      *
      * @param documentFrequencies
-     */
+     *
     public void tfIdf(Map<Integer, TIntList> documentFrequencies) {
         countsToTfIdf(documentFrequencies);
-    }
-    
-    /**
-     *
-     * @param fromCol
-     */
-    public void removeEmptyRows(Integer fromCol){
-        int[] selRows = Ints.toArray(ContiguousSet.create(Range.closed(0, counts.rows()-1), DiscreteDomain.integers()));
-        int[] selCols = Ints.toArray(ContiguousSet.create(Range.closed(0, fromCol), DiscreteDomain.integers()));
-        counts = (SparseMatrix) counts.select(selRows, selCols);
-    }
-        
-    /**
-     *
-     * @param mostFrequent
-     */
-    public void removeMostFrequent(Set<Integer> mostFrequent){
-        for(int i : mostFrequent){
-            counts.setColumn(i,0);
-        }
-    }
+    }*/
     
     /**
      *
      * @param fileID
      * @param debate
-     * @param documentIndices
-     * @param tokenIndices
      * @throws IOException
      */
-    public void processDebate(String fileID, List<PolMineReader.DebateSection> debate, Map<String, Integer> documentIndices, Map<String, Integer> tokenIndices) throws IOException {
+    public void processDebate(String fileID, List<PolMineReader.DebateSection> debate) throws IOException {
         
+        System.out.println(String.format("Create term-frequencies vector of file %s...", fileID));
         Integer fileIDIndex = documentIndices.get(fileID);
         if (fileIDIndex == null) {
             throw new IOException(String.format("Unknown file ID: %s", fileID));
         }
-
+        
+        docVec = SparseVector.zero(tokenIndices.size());
         for (PolMineReader.DebateSection section : debate){
-            for (Integer token : tokensToIndices(section.contributionContent(), tokenIndices)) {
-                counts.set(fileIDIndex, token, counts.get(fileIDIndex, token)+1);
+            for (Integer token : tokensToIndices(section.contributionContent())) {
+                if (!mostFrequent.contains(token)){
+                    docVec.set(token, docVec.get(token)+1);
+                }
             }
         }
+        System.out.println("Term-frequencies vector created");
     }
 
     /**
@@ -94,7 +78,7 @@ public class TermDocumentMatrix {
      * @return
      * @throws IOException 
      */
-    private List<Integer> tokensToIndices(List<String> sectionContent, Map<String, Integer> tokenIndices) throws IOException {
+    private List<Integer> tokensToIndices(List<String> sectionContent) throws IOException {
         
         List<Integer> indices = new ArrayList<>();
 
@@ -123,7 +107,7 @@ public class TermDocumentMatrix {
     
     /**
      * 
-     */
+     *
     private void countsToTfIdf(Map<Integer, TIntList> documentFrequencies) {
         for (int i = 0; i < counts.rows(); i++) {
             for(int j = 0; j < counts.columns(); j++){
@@ -133,5 +117,5 @@ public class TermDocumentMatrix {
                 }
             }
         }
-    }
+    }*/
 }

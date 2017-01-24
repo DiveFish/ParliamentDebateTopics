@@ -1,7 +1,9 @@
 package parliamentdebatetopics;
 
 import gnu.trove.list.TIntList;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Comparator;
@@ -24,7 +26,6 @@ import org.la4j.matrix.SparseMatrix;
 public class MatrixBuilder {
 
     private static final int STOPWORD_LIST_SIZE = 150;//150;
-    private static final int MAX_VOCAB_SIZE = 500000;
     private static final Layer LAYER = Layer.TOKEN;  //options: TOKEN or LEMMA
     //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized/";
     //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized-samples/";
@@ -32,7 +33,7 @@ public class MatrixBuilder {
 
     /**
      *
-     * @param args
+     * @param args The directory where  the xml file are stored
      * @throws IOException
      */
     public static void main(String[] args) throws IOException {
@@ -51,51 +52,39 @@ public class MatrixBuilder {
         // Read xml files and save them into debate objects
         PolMineReader pol = new PolMineReader();
         Vocabulary vocabulary = new Vocabulary(LAYER);
-        TermDocumentMatrix tdm = new TermDocumentMatrix(LAYER, files.length, MAX_VOCAB_SIZE);
         
+        int count = 0;
         for(File file : files){
             if (file.isFile() && file.getName().endsWith(".xml")){
                 // Extract content of debates
                 pol.constructDebate(file);
                 // Process vocabulary of debates
                 vocabulary.processDebate(pol.getFileID(), pol.getDebate());
-                // Create document vector and add to matrix
-                tdm.processDebate(pol.getFileID(), pol.getDebate(), vocabulary.documentIndices(), vocabulary.tokenIndices());
             }
+            System.out.println(++count);
         }
         
-        tdm.removeEmptyRows(vocabulary.tokenIndices().size()-1);
-        
-        // Remove all words with high frequency/ stopwords
         Set<Integer> mostFrequent = mostFrequentTokens(vocabulary.tokenCounts(), STOPWORD_LIST_SIZE);
-        tdm.removeMostFrequent(mostFrequent);
+        TermDocumentMatrix tdm = new TermDocumentMatrix(LAYER, vocabulary.documentIndices(), vocabulary.tokenIndices(), mostFrequent);
         
-        System.out.println("Visualizing term document matrix");
-        //System.out.println(tdm.counts());
-                
-        System.out.println("Saving term document matrix to csv");
-        try (PrintWriter pw1 = new PrintWriter(new File("./TermDocMatrix.csv"))) {
-            pw1.write(tdm.counts().toCSV());
+        try(FileWriter fw = new FileWriter("TermFrequencyMatrix.csv", true);
+            BufferedWriter bw = new BufferedWriter(fw);
+            PrintWriter out = new PrintWriter(bw))
+        {
+            count = 0;
+            for(File file : files){
+                if (file.isFile() && file.getName().endsWith(".xml")){
+                    // Extract content of debates
+                    pol.constructDebate(file);
+                    // Add term frequencies to matrix
+                    tdm.processDebate(pol.getFileID(), pol.getDebate());
+                }
+                out.println(tdm.docVec().toCSV());
+                System.out.println(++count);
+            }
+        } catch (IOException e) {
         }
         
-        // Transform term-document matrix into td.idf matrix
-        tdm.tfIdf(vocabulary.documentFrequencies());
-        //System.out.println("Visualizing td.idf matrix");
-        //System.out.println(tdm.counts());
-        
-        System.out.println("Saving tf.idf matrix to csv");
-        try (PrintWriter pw2 = new PrintWriter(new File("TfIdfMatrices.csv"))) {
-            pw2.write(tdm.counts().toCSV());
-            pw2.close();
-        }
-        /*
-        // Decompose tf.idf matrix by applying singular-value decomposition
-        SingularValueDecompositor svd = new SingularValueDecompositor(tdm.counts());
-        System.out.println("Visualizing svd matrices");
-        for(Matrix m : svd.decompose()){
-            System.out.println(m);
-        }
-        */
     }
 
     /**
