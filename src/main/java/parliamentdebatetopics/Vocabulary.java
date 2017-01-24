@@ -21,10 +21,10 @@ public class Vocabulary {
 
     private final BiMap<String, Integer> documentIndices;
     private final BiMap<String, Integer> tokenIndices;
-    private final Map<Integer, TIntList> documentFrequencies;
+    private final Map<Integer, TIntList> documentFrequencies; //stores for each term the documents in which it occurs
     private final TIntList tokenCounts;  //for getting the most frequent tokens/ stopwords
     private final Layer layer;
-
+    
     public Vocabulary() {
         documentIndices = HashBiMap.create();
         tokenIndices = HashBiMap.create();
@@ -95,7 +95,7 @@ public class Vocabulary {
             else {
                 tokenCounts.set(index, tokenCounts.get(index) + 1);
             }
-            
+
             //Add all document indices to document index list of respective token to obtain token's document frequency
             if (!documentFrequencies.containsKey(index)) {
                 documentFrequencies.putIfAbsent(index, new TIntArrayList());
