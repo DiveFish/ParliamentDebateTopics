@@ -4,5 +4,5 @@ For now, only the matrix representation of the debates has been implemented.
 
 Run MatrixBuilder to have a look at the term-document, tf.idf and svd matrices.
 
-You can choose between hardcoding your xml file directory or giving the directory as argument to the MatrxiBuilder. Uncomment the respective lines for FILE_DIR and filesDir accordingly.
+You can choose between hardcoding your xml file directory or giving the directory as argument to the MatrixBuilder. Uncomment the respective lines for FILE_DIR and filesDir in MatrixBuilder accordingly.
 
