@@ -25,7 +25,8 @@ import org.xml.sax.helpers.DefaultHandler;
 public class PolMineReader {
     
     private static List<DebateSection> debate;
-    private static String fileName;
+    
+    private static String debateID;
 
     private final SAXParserFactory parserFactory;
 
@@ -38,18 +39,18 @@ public class PolMineReader {
 
     /**
      *
-     * @param inputFile The directory which stores the xml files
+     * @param xmlFile The directory which stores the xml files
      * @throws IOException
      */
-    public void constructDebate(File inputFile) throws IOException{
+    public void constructDebate(File xmlFile) throws IOException{
         try {
             SAXParser saxParser = parserFactory.newSAXParser();
             XMLHandler xmlHandler = new XMLHandler();
             
-            fileName = inputFile.getName();
-            if (fileName.endsWith(".xml")){
-                  System.out.println(String.format("Parsing file %s ...", fileName));
-                  saxParser.parse(inputFile, xmlHandler);
+            debateID = xmlFile.getName();
+            if (debateID.endsWith(".xml")){
+                  System.out.println(String.format("Parsing file %s ...", debateID));
+                  saxParser.parse(xmlFile, xmlHandler);
                   debate = xmlHandler.debate();
             }
             
@@ -62,8 +63,8 @@ public class PolMineReader {
         return debate;
     }
     
-    public String getFileID(){
-        return fileName;
+    public String getDebateID(){
+        return debateID;
     }
     
 
@@ -142,9 +143,6 @@ public class PolMineReader {
         }
     }
 
-    /**
-     *
-     */
     public class DebateSection{
         private final String date;
         private final String speaker;
@@ -158,34 +156,18 @@ public class PolMineReader {
             this.contribution = contribution;
         }
 
-        /**
-         *
-         * @return
-         */
         public String dateDay() {
             return date;
         }
 
-        /**
-         *
-         * @return
-         */
         public String speakerName() {
             return speaker;
         }
 
-        /**
-         *
-         * @return
-         */
         public String partyName() {
             return party;
         }
 
-        /**
-         *
-         * @return
-         */
         public List<String> contributionContent() {
             return contribution;
         }
