@@ -13,6 +13,7 @@ public class MatrixMeasures {
      * Calculate the cosine similarity between two vectors. The dot product is
      * divided by the length of the vectors. The norm() method on a Vector
      * returns the euclidean norm of the vector.
+     * 
      * @param v1 The first vector
      * @param v2 The second vector
      * @return The cosine similarity between v1 and v2
@@ -28,6 +29,7 @@ public class MatrixMeasures {
     
     /**
      * Calculate the euclidean distance between two vectors.
+     * 
      * @param v1 The first vector
      * @param v2 The second vector
      * @return The euclidean distance between v1 and v2
