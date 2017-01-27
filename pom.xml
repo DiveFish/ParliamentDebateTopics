@@ -50,6 +50,11 @@
             <version>18.0</version>
             <type>jar</type>
         </dependency>
+	<dependency>
+            <groupId>eu.danieldk.nlp</groupId>
+            <artifactId>conllx-io</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
