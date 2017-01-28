@@ -1,7 +1,9 @@
 package clustering;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -16,12 +18,14 @@ import org.la4j.vector.SparseVector;
  * @author Patricia Fischer
  */
 public class KMeans {
-    private static final int NUM_OF_CLUSTERS = 15;
+    private static final int NUM_OF_CLUSTERS = 3;
     private final int vector_length;  // vocabulary size
+    private final int num_of_docs;  // document count
     private final Matrix documentVectors;
     
     public KMeans(Matrix documentVectors) {
         this.vector_length = documentVectors.columns();
+        this.num_of_docs = documentVectors.rows();
         this.documentVectors = documentVectors;
     }
     
@@ -42,25 +46,37 @@ public class KMeans {
     -- add all vectors to the respective cluster
     -- recompute centroids
     */
-    public Map<Vector, Set<Vector>> kmeans() {
-        Map<Vector, Set<Vector>> clusters = new HashMap();
-        Set<Vector> centroids = new HashSet<>();
+    public Map<Vector, List<Vector>> kmeans() {
+        Map<Vector, List<Vector>> clusters = new HashMap(); // do NOT remove duplicated -> list
+        List<Vector> centroids = new ArrayList<>(); // unique vectors, no duplicates -> set
        
+        /*
         //Create random vectors as first centroids
         for(int i = 0; i < NUM_OF_CLUSTERS; i++) {
             //double random = documentVectors.min() + (Math.random() * documentVectors.max());
-            
             //TODO: set lower and upper bound for initilization
             Random val = new Random();
             Vector seed = SparseVector.random(vector_length, val); // length(, density), random
             centroids.add(seed);
         }
+        */
         
-        boolean stop = false;
-        while (!stop) {
-            clusters.clear();  // centroids have changed, therefore get rid of old "centroid->vectors" lists
+        // choose centroids from document vectors
+        Random rand = new Random();
+        while (centroids.size()<NUM_OF_CLUSTERS){
+            int randomRow = rand.nextInt(num_of_docs);
+            if (!centroids.contains(documentVectors.getRow(randomRow))){
+                centroids.add(documentVectors.getRow(randomRow));
+            }
+        }
+        
+        boolean converged = false;
+        while (!converged) {
+            // After first iteration, centroids will have changed
+            // -> get rid of old "centroid->vectors" lists
+            clusters = new HashMap();
             
-            for (int row = 0; row < documentVectors.rows(); row++) {
+            for (int row = 0; row < num_of_docs; row++) {
                 double minimum = Math.pow(2, 30); // just some large number
                 Vector closestCentroid = SparseVector.zero(vector_length);
                 for (Vector centroid : centroids) {
@@ -70,30 +86,35 @@ public class KMeans {
                         closestCentroid = centroid;
                     }
                 }
+                if (!clusters.containsKey(closestCentroid)){
+                    List<Vector> emptyVectorSet = new ArrayList<>();
+                    clusters.putIfAbsent(closestCentroid, emptyVectorSet);
+                }
                 clusters.get(closestCentroid).add(documentVectors.getRow(row));
             }
             
+            // distance between old and recomputed centroids
+            int distOfCentr = 0;
+            
             // Recompute new centroids
-            for (Map.Entry<Vector,Set<Vector>> cluster : clusters.entrySet()) {
+            for (Map.Entry<Vector,List<Vector>> cluster : clusters.entrySet()) {
                 
                 Vector adjustedCentroid = SparseVector.zero(vector_length);
-                Set<Vector> clusterVectors = cluster.getValue();
+                List<Vector> clusterVectors = cluster.getValue();
                 for (Vector vec : clusterVectors) {
-                    adjustedCentroid.add(vec);
+                    adjustedCentroid = adjustedCentroid.add(vec);
                 }
-                adjustedCentroid.divide(clusterVectors.size());
+                adjustedCentroid = adjustedCentroid.divide(clusterVectors.size());
                 
                 centroids.remove(cluster.getKey());
                 centroids.add(adjustedCentroid);
+                distOfCentr += cluster.getKey().sum()-adjustedCentroid.sum();
             }    
             
-            if (stop) {
-                stop = true;
-                /*
-                - centroids do not move much anymore (distance between previous and new centroid is small)
-                - instances do not change the cluster anymore
-                - sum of distances of the instances to the centroids does not change anymore
-                */
+            // centroids do not move much anymore (distance between previous and new centroid is small)
+            // Alternative: sum of distances of the instances to the centroids does not change anymore
+            if (distOfCentr/centroids.size() < 1) { //TODO: how to decide for a number?
+                converged = true;
             }
         }
         
