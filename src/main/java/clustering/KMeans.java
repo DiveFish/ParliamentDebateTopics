@@ -46,7 +46,7 @@ public class KMeans {
     -- add all vectors to the respective cluster
     -- recompute centroids
     */
-    public Map<Vector, List<Vector>> kmeans() {
+    public Map<Integer, List<Vector>> kmeans() {
         Map<Vector, List<Vector>> clusters = new HashMap(); // do NOT remove duplicated -> list
         List<Vector> centroids = new ArrayList<>(); // unique vectors, no duplicates -> set
        
@@ -61,11 +61,11 @@ public class KMeans {
         }
         */
         
-        // choose centroids from document vectors
+        // Choose random centroids from document vectors
         Random rand = new Random();
-        while (centroids.size()<NUM_OF_CLUSTERS){
+        while (centroids.size()<NUM_OF_CLUSTERS) {
             int randomRow = rand.nextInt(num_of_docs);
-            if (!centroids.contains(documentVectors.getRow(randomRow))){
+            if (!centroids.contains(documentVectors.getRow(randomRow))) {
                 centroids.add(documentVectors.getRow(randomRow));
             }
         }
@@ -86,7 +86,7 @@ public class KMeans {
                         closestCentroid = centroid;
                     }
                 }
-                if (!clusters.containsKey(closestCentroid)){
+                if (!clusters.containsKey(closestCentroid)) {
                     List<Vector> emptyVectorSet = new ArrayList<>();
                     clusters.putIfAbsent(closestCentroid, emptyVectorSet);
                 }
@@ -117,10 +117,17 @@ public class KMeans {
                 converged = true;
             }
         }
+        System.out.println(clusters);
         
-        // convert centroid vector to cluster number ?
+        // convert centroid vector to cluster number
+        Map<Integer, List<Vector>> clustersByNumber = new HashMap();
+        int i = 1;
+        for (Map.Entry<Vector,List<Vector>> cluster : clusters.entrySet()) {
+            clustersByNumber.put(i, cluster.getValue());
+            i++;
+        }
         
-        return clusters;
+        return clustersByNumber;
     }
     
 }
