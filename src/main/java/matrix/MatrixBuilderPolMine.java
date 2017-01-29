@@ -48,6 +48,7 @@ public class MatrixBuilderPolMine extends MatrixBuilder {
         File filesDir = new File(FILE_DIR);
         File[] files = filesDir.listFiles();
         
+        
         // Read xml files and process them one after the other
         PolMineReader pol = new PolMineReader();
         VocabularyPolMine vocabulary = new VocabularyPolMine(LAYER);
@@ -78,25 +79,21 @@ public class MatrixBuilderPolMine extends MatrixBuilder {
             System.out.println(++filesDone);
         }
         
-        System.out.println("Visualizing term-document matrix");
-        System.out.println(tdm.counts());
-                
         System.out.println("Saving term-document matrix to csv");
         try (PrintWriter pw1 = new PrintWriter(new File("./TermDocumentMatrixPolMine.csv"))) {
             pw1.write(tdm.counts().toCSV());
+            pw1.close();
         }
         
         // Transform term-document matrix into tf.idf matrix
         tdm.tfIdf(vocabulary.documentFrequencies());
-        System.out.println("Visualizing tf.idf matrix");
-        System.out.println(tdm.counts());
-        /*
+        
         System.out.println("Saving tf.idf matrix to csv");
-        try (PrintWriter pw2 = new PrintWriter(new File("TfIdfMatrixPolMine.csv"))) {
+        try (PrintWriter pw2 = new PrintWriter(new File("./TfIdfMatrixPolMine.csv"))) {
             pw2.write(tdm.counts().toCSV());
             pw2.close();
         }
-        
+        /*
         // Decompose tf.idf matrix by applying singular-value decomposition
         SingularValueDecompositor svd = new SingularValueDecompositor(tdm.counts());
         System.out.println("Visualizing svd matrices");
