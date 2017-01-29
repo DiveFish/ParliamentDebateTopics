@@ -25,10 +25,11 @@ public class MatrixBuilderPolMine extends MatrixBuilder {
      */
     //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized/";
     
-    private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized-samples/";
+    //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized-samples/";
     
-    //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/testFiles/";
+    private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/testFiles/";
 
+    private static final String OUTPUT_DIR = "./PolMineMatrices/";
     
     /**
      *
@@ -79,8 +80,14 @@ public class MatrixBuilderPolMine extends MatrixBuilder {
             System.out.println(++filesDone);
         }
         
+        
+        File directory = new File(String.valueOf(OUTPUT_DIR));
+        if (! directory.exists()){
+            directory.mkdir();
+        }
+        
         System.out.println("Saving term-document matrix to csv");
-        try (PrintWriter pw1 = new PrintWriter(new File("./TermDocumentMatrixPolMine.csv"))) {
+        try (PrintWriter pw1 = new PrintWriter(new File(OUTPUT_DIR+"TermDocumentMatrixPolMine.csv"))) {
             pw1.write(tdm.counts().toCSV());
             pw1.close();
         }
@@ -89,7 +96,7 @@ public class MatrixBuilderPolMine extends MatrixBuilder {
         tdm.tfIdf(vocabulary.documentFrequencies());
         
         System.out.println("Saving tf.idf matrix to csv");
-        try (PrintWriter pw2 = new PrintWriter(new File("./TfIdfMatrixPolMine.csv"))) {
+        try (PrintWriter pw2 = new PrintWriter(new File(OUTPUT_DIR+"TfIdfMatrixPolMine.csv"))) {
             pw2.write(tdm.counts().toCSV());
             pw2.close();
         }
