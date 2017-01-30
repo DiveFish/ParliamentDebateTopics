@@ -2,12 +2,10 @@ package clustering;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
-import static matrix.MatrixMeasures.euclideanDistance;
+import static matrix.VectorMeasures.euclideanDistance;
 import org.la4j.Vector;
 import org.la4j.Matrix;
 import org.la4j.vector.SparseVector;
@@ -18,7 +16,7 @@ import org.la4j.vector.SparseVector;
  * @author Patricia Fischer
  */
 public class KMeans {
-    private static final int NUM_OF_CLUSTERS = 3;
+    private static final int NUM_OF_CLUSTERS = 5;
     private final int vector_length;  // vocabulary size
     private final int num_of_docs;  // document count
     private final Matrix documentVectors;
@@ -46,9 +44,9 @@ public class KMeans {
     -- add all vectors to the respective cluster
     -- recompute centroids
     */
-    public Map<Integer, List<Vector>> kmeans() {
-        Map<Vector, List<Vector>> clusters = new HashMap(); // do NOT remove duplicated -> list
-        List<Vector> centroids = new ArrayList<>(); // unique vectors, no duplicates -> set
+    public List<List<Vector>> clusters() {
+        Map<Vector, List<Vector>> clusters = new HashMap();
+        List<Vector> centroids = new ArrayList<>();
        
         /*
         //Create random vectors as first centroids
@@ -63,7 +61,7 @@ public class KMeans {
         
         // Choose random centroids from document vectors
         Random rand = new Random();
-        while (centroids.size()<NUM_OF_CLUSTERS) {
+        while (centroids.size() < NUM_OF_CLUSTERS) {
             int randomRow = rand.nextInt(num_of_docs);
             if (!centroids.contains(documentVectors.getRow(randomRow))) {
                 centroids.add(documentVectors.getRow(randomRow));
@@ -76,6 +74,7 @@ public class KMeans {
             // -> get rid of old "centroid->vectors" lists
             clusters = new HashMap();
             
+            // Assign vectors to their closest centroid
             for (int row = 0; row < num_of_docs; row++) {
                 double minimum = Math.pow(2, 30); // just some large number
                 Vector closestCentroid = SparseVector.zero(vector_length);
@@ -93,7 +92,7 @@ public class KMeans {
                 clusters.get(closestCentroid).add(documentVectors.getRow(row));
             }
             
-            // distance between old and recomputed centroids
+            // Distance between old and recomputed centroids
             int distOfCentr = 0;
             
             // Recompute new centroids
@@ -111,20 +110,17 @@ public class KMeans {
                 distOfCentr += cluster.getKey().sum()-adjustedCentroid.sum();
             }    
             
-            // centroids do not move much anymore (distance between previous and new centroid is small)
+            // Centroids do not move much anymore (distance between previous and new centroid is small)
             // Alternative: sum of distances of the instances to the centroids does not change anymore
             if (distOfCentr/centroids.size() < 1) { //TODO: how to decide for a number?
                 converged = true;
             }
         }
-        System.out.println(clusters);
         
-        // convert centroid vector to cluster number
-        Map<Integer, List<Vector>> clustersByNumber = new HashMap();
-        int i = 1;
+        // Convert centroid vectors to list of clusters where index of cluster can be used as the cluster number
+        List<List<Vector>> clustersByNumber = new ArrayList();
         for (Map.Entry<Vector,List<Vector>> cluster : clusters.entrySet()) {
-            clustersByNumber.put(i, cluster.getValue());
-            i++;
+            clustersByNumber.add(cluster.getValue());
         }
         
         return clustersByNumber;
