@@ -1,13 +1,16 @@
 package matrix;
 
+import clustering.KMeans;
 import io.Layer;
 import io.PolMineReader;
 import io.VocabularyPolMine;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import org.la4j.Vector;
 
 /**
  *
@@ -15,7 +18,7 @@ import java.util.Set;
  */
 public class MatrixBuilderPolMine extends MatrixBuilder {
 
-    private static final int STOPWORD_LIST_SIZE = 1;//50;//150;
+    private static final int STOPWORD_LIST_SIZE = 150;//150;
     
     private static final Layer LAYER = Layer.TOKEN;  //options: TOKEN or LEMMA
     
@@ -25,9 +28,9 @@ public class MatrixBuilderPolMine extends MatrixBuilder {
      */
     //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized/";
     
-    //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized-samples/";
+    private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized-samples/";
     
-    private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/testFiles/";
+    //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/testFiles/";
 
     private static final String OUTPUT_DIR = "./PolMineMatrices/";
     
@@ -42,7 +45,7 @@ public class MatrixBuilderPolMine extends MatrixBuilder {
         Locale.setDefault(Locale.Category.FORMAT, Locale.ENGLISH);
         
         if (args.length != 1) {
-            System.out.println("Wrong number of arguments.\nUsage: 1, provide path to data files");
+            System.out.println("Wrong number of arguments.Usage: 1, provide path to data files");
         }
         //File filesDir = new File(args[0]);
         
@@ -80,9 +83,8 @@ public class MatrixBuilderPolMine extends MatrixBuilder {
             System.out.println(++filesDone);
         }
         
-        
-        File directory = new File(String.valueOf(OUTPUT_DIR));
-        if (! directory.exists()){
+        File directory = new File(OUTPUT_DIR);
+        if (!directory.exists()) {
             directory.mkdir();
         }
         
@@ -100,14 +102,21 @@ public class MatrixBuilderPolMine extends MatrixBuilder {
             pw2.write(tdm.counts().toCSV());
             pw2.close();
         }
+        
+        KMeans km = new KMeans(tdm.counts());
+        System.out.println("Display k-means clusters");
+        km.clusters().stream().forEach((cluster) -> {
+            System.out.println(cluster);
+        });
+        
         /*
         // Decompose tf.idf matrix by applying singular-value decomposition
         SingularValueDecompositor svd = new SingularValueDecompositor(tdm.counts());
         System.out.println("Visualizing svd matrices");
         for(Matrix m : svd.decompose()) {
-            System.out.println(m);
+        System.out.println(m);
         }
-        */
+         */
     }
     
 }

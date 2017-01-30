@@ -1,5 +1,6 @@
 package matrix;
 
+import clustering.KMeans;
 import io.Layer;
 import io.TazReader;
 import io.VocabularyTaz;
@@ -11,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import org.la4j.Vector;
 
 /**
  *
@@ -76,7 +78,7 @@ public class MatrixBuilderTaz extends MatrixBuilder {
             }
             System.out.println(++filesDone);
         }
-        
+        /*
         File directory = new File(String.valueOf(OUTPUT_DIR));
         if (! directory.exists()){
             directory.mkdir();
@@ -87,22 +89,29 @@ public class MatrixBuilderTaz extends MatrixBuilder {
             pw1.write(tdm.counts().toCSV());
             pw1.close();
         }
-        
+        */
         // Transform term-document matrix into tf.idf matrix
         tdm.tfIdf(vocabulary.documentFrequencies());
+        /*
         System.out.println("Saving tf.idf matrix to csv");
         try (PrintWriter pw2 = new PrintWriter(new File(OUTPUT_DIR+"TfIdfMatrixTaz.csv"))) {
             pw2.write(tdm.counts().toCSV());
             pw2.close();
         }
+        */
+        KMeans km = new KMeans(tdm.counts());
+        System.out.println("Display k-means clusters");
+        km.clusters().stream().forEach((cluster) -> {
+            System.out.println(cluster);
+        });
         /*
         // Decompose tf.idf matrix by applying singular-value decomposition
         SingularValueDecompositor svd = new SingularValueDecompositor(tdm.counts());
         System.out.println("Visualizing svd matrices");
         for(Matrix m : svd.decompose()) {
-            System.out.println(m);
+        System.out.println(m);
         }
-        */
+         */
     }
     
 }
