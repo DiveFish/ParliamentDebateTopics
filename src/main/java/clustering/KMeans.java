@@ -55,26 +55,31 @@ public class KMeans {
         int vector_length = documentVectors.columns();  //vocab size
         int num_of_docs = documentVectors.rows();
         
+        
+        List<Vector> centroids = new ArrayList<>();
         /*
         //Create random vectors as first centroids
-        for(int i = 0; i < NUM_OF_CLUSTERS; i++) {
-            //double random = documentVectors.min() + (Math.random() * documentVectors.max());
+        while (centroids.size() < numOfClusters) {
+            
             //TODO: set lower and upper bound for initilization
-            Random val = new Random();
-            Vector seed = SparseVector.random(vector_length, val); // length(, density), random
-            centroids.add(seed);
+            //Random val = new Random();
+            //Vector seed = SparseVector.random(vector_length, val); // length(, density), random
+            
+            double random = documentVectors.min() + (Math.random() * documentVectors.max());
+            Vector seed = SparseVector.zero(vector_length);
+            seed.setAll(random);
+            if (!centroids.contains(seed)) {
+                centroids.add(seed);
+            }
         }
         */
         
         // Choose random centroids from document vectors
-        List<Vector> centroids = new ArrayList<>();
         Random rand = new Random();
         while (centroids.size() < numOfClusters) {
             int randomRow = rand.nextInt(num_of_docs);
-            System.out.println(documentVectors.getRow(randomRow));
             if (!centroids.contains(documentVectors.getRow(randomRow))) {
                 centroids.add(documentVectors.getRow(randomRow));
-                System.out.println("added");
             }
         }
         
@@ -137,6 +142,8 @@ public class KMeans {
         List<List<Vector>> clustersByNumber = new ArrayList();
         for (Map.Entry<Vector,List<Vector>> cluster : clusters.entrySet()) {
             clustersByNumber.add(cluster.getValue());
+            System.out.println(cluster.getKey());
+            System.out.println(cluster.getValue()+"\n");
         }
         
         List<TIntList> docClustersByNumber = new ArrayList();
