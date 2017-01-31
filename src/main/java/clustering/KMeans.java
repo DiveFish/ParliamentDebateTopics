@@ -142,8 +142,6 @@ public class KMeans {
         List<List<Vector>> clustersByNumber = new ArrayList();
         for (Map.Entry<Vector,List<Vector>> cluster : clusters.entrySet()) {
             clustersByNumber.add(cluster.getValue());
-            System.out.println(cluster.getKey());
-            System.out.println(cluster.getValue()+"\n");
         }
         
         List<TIntList> docClustersByNumber = new ArrayList();
