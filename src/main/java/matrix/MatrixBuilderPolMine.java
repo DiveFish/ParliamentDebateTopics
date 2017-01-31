@@ -1,6 +1,7 @@
 package matrix;
 
 import clustering.KMeans;
+import gnu.trove.list.TIntList;
 import io.Layer;
 import io.PolMineReader;
 import io.VocabularyPolMine;
@@ -10,7 +11,6 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import org.la4j.Vector;
 
 /**
  *
@@ -28,7 +28,7 @@ public class MatrixBuilderPolMine extends MatrixBuilder {
      */
     //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized/";
     
-    private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized-samples/";
+    //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized-samples/";
     
     //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/testFiles/";
 
@@ -47,9 +47,9 @@ public class MatrixBuilderPolMine extends MatrixBuilder {
         if (args.length != 1) {
             System.out.println("Wrong number of arguments.Usage: 1, provide path to data files");
         }
-        //File filesDir = new File(args[0]);
+        File filesDir = new File(args[0]);
         
-        File filesDir = new File(FILE_DIR);
+        //File filesDir = new File(FILE_DIR);
         File[] files = filesDir.listFiles();
         
         
@@ -103,11 +103,11 @@ public class MatrixBuilderPolMine extends MatrixBuilder {
             pw2.close();
         }
         
-        KMeans km = new KMeans(tdm.counts());
+        KMeans km = new KMeans(2, tdm.counts());
         System.out.println("Display k-means clusters");
-        km.clusters().stream().forEach((cluster) -> {
+        List<TIntList> clusters = km.clusters();
+        for (TIntList cluster : clusters)
             System.out.println(cluster);
-        });
         
         /*
         // Decompose tf.idf matrix by applying singular-value decomposition
