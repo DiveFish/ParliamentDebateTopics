@@ -1,5 +1,9 @@
 package clustering;
 
+import com.google.common.collect.BiMap;
+import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,14 +20,11 @@ import org.la4j.vector.SparseVector;
  * @author Patricia Fischer
  */
 public class KMeans {
-    private static final int NUM_OF_CLUSTERS = 5;
-    private final int vector_length;  // vocabulary size
-    private final int num_of_docs;  // document count
+    private final int numOfClusters;
     private final Matrix documentVectors;
     
-    public KMeans(Matrix documentVectors) {
-        this.vector_length = documentVectors.columns();
-        this.num_of_docs = documentVectors.rows();
+    public KMeans(int numOfClusters, Matrix documentVectors) {
+        this.numOfClusters = numOfClusters;
         this.documentVectors = documentVectors;
     }
     
@@ -33,6 +34,7 @@ public class KMeans {
      * When all documents are assigned to a centroid, readjust centroids.
      *
      * @return The clusters
+     * @throws java.io.IOException
      */
     
     /*
@@ -44,10 +46,15 @@ public class KMeans {
     -- add all vectors to the respective cluster
     -- recompute centroids
     */
-    public List<List<Vector>> clusters() {
-        Map<Vector, List<Vector>> clusters = new HashMap();
-        List<Vector> centroids = new ArrayList<>();
-       
+    //public List<List<Vector>> clusters() {
+    public List<TIntList> clusters() throws IOException {    
+        if (documentVectors.max() == 0) {
+            throw new IOException(String.format("Trying to extract clusters from zero matrix"));
+        }
+        
+        int vector_length = documentVectors.columns();  //vocab size
+        int num_of_docs = documentVectors.rows();
+        
         /*
         //Create random vectors as first centroids
         for(int i = 0; i < NUM_OF_CLUSTERS; i++) {
@@ -60,19 +67,24 @@ public class KMeans {
         */
         
         // Choose random centroids from document vectors
+        List<Vector> centroids = new ArrayList<>();
         Random rand = new Random();
-        while (centroids.size() < NUM_OF_CLUSTERS) {
+        while (centroids.size() < numOfClusters) {
             int randomRow = rand.nextInt(num_of_docs);
+            System.out.println(documentVectors.getRow(randomRow));
             if (!centroids.contains(documentVectors.getRow(randomRow))) {
                 centroids.add(documentVectors.getRow(randomRow));
+                System.out.println("added");
             }
         }
         
+        Map<Vector, List<Vector>> clusters = new HashMap();
+        Map<Vector, TIntList> docClusters = new HashMap();
         boolean converged = false;
         while (!converged) {
-            // After first iteration, centroids will have changed
-            // -> get rid of old "centroid->vectors" lists
+            // After first iteration, centroids will have changed -> get rid of old "centroid->vectors" lists
             clusters = new HashMap();
+            docClusters = new HashMap();
             
             // Assign vectors to their closest centroid
             for (int row = 0; row < num_of_docs; row++) {
@@ -88,8 +100,12 @@ public class KMeans {
                 if (!clusters.containsKey(closestCentroid)) {
                     List<Vector> emptyVectorSet = new ArrayList<>();
                     clusters.putIfAbsent(closestCentroid, emptyVectorSet);
+                    
+                    TIntList emptyDocSet = new TIntArrayList();
+                    docClusters.putIfAbsent(closestCentroid, emptyDocSet);
                 }
                 clusters.get(closestCentroid).add(documentVectors.getRow(row));
+                docClusters.get(closestCentroid).add(row);
             }
             
             // Distance between old and recomputed centroids
@@ -123,7 +139,12 @@ public class KMeans {
             clustersByNumber.add(cluster.getValue());
         }
         
-        return clustersByNumber;
+        List<TIntList> docClustersByNumber = new ArrayList();
+        for (Map.Entry<Vector,TIntList> docCluster : docClusters.entrySet()) {
+            docClustersByNumber.add(docCluster.getValue());
+        }
+        
+        return docClustersByNumber;
     }
     
 }
