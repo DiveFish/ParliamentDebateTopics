@@ -15,7 +15,7 @@
 		  </descriptorRefs>
 		  <archive>
 		      <manifest>
-			  <mainClass>parliamentdebatetopics.MatrixBuilder</mainClass>
+			  <mainClass>io.InputHandler</mainClass>
 		      </manifest>
 		  </archive>
 	      </configuration>
