@@ -35,11 +35,20 @@ public class VectorMeasures {
      * @return The euclidean distance between v1 and v2
      */
     public static double euclideanDistance(Vector v1, Vector v2){
-        double euc = 0;
-        for (int i = 0; i < v1.length(); i++){
-            euc += Math.pow(v2.get(i) - v1.get(i),2);
-        } 
         
+        double euc = 0;
+        Vector v = v1.subtract(v2);
+        for (int i = 0; i < v.length(); i++){
+            euc += Math.pow(v.get(i), 2);
+        }
         return Math.sqrt(euc);
+        
+        // Accessing both vectors and doing the calculations is slower
+        //for (int i = 0; i < v1.length(); i++){
+            //euc += Math.pow(v2.get(i) - v1.get(i), 2);
+        //}
+        
+        // Alternative l2norm(vec1+(-vec2)) is also slower
+        //return v1.add(v2.multiply(-1)).norm();
     }
 }

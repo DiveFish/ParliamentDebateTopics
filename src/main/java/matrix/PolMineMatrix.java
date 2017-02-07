@@ -12,11 +12,7 @@ import io.Layer;
 import io.PolMineReader;
 
 /**
- * Create a term-document and tf.idf matrix from the PolMine debates. All debates
- * and the vocabulary extracted from the debates are associated with indices
- * that can be used to construct the term-document matrix by taking the rows
- * from the document and the columns from the token indices.
- *
+ * 
  * @author Daniël de Kok and Patricia Fischer
  */
 public class PolMineMatrix implements TermDocumentMatrix {
@@ -67,7 +63,7 @@ public class PolMineMatrix implements TermDocumentMatrix {
      */
     public void processFile(String fileID, List<PolMineReader.DebateSection> debate) throws IOException {
         
-        System.out.println(String.format("Add term frequencies of file %s to matrix", fileID));
+        System.out.println(String.format("Add term frequencies from file %s", fileID));
         Integer fileIDIndex = documentIndices.get(fileID);
         if (fileIDIndex == null) {
             throw new IOException(String.format("Unknown file ID: %s", fileID));
@@ -80,7 +76,6 @@ public class PolMineMatrix implements TermDocumentMatrix {
                 }
             }
         }
-        System.out.println(String.format("Done adding term frequencies of file %s to matrix", fileID));
     }
 
     /**
@@ -119,15 +114,17 @@ public class PolMineMatrix implements TermDocumentMatrix {
     
     /**
      * 
+     * @param documentFrequencies The document frequencies of all terms
      */
     private void countsToTfIdf(List<TIntList> documentFrequencies) {
-        for (int i = 0; i < counts.rows(); i++) {
+        int numOfDocuments = counts.rows();
+        for (int i = 0; i < numOfDocuments; i++) {
             for(int j = 0; j < counts.columns(); j++){
                 if (!(documentFrequencies.get(j) == null)){
-                    counts.set(i, j, counts.get(i,j) *
-                        Math.log(counts.rows()/documentFrequencies.get(j).size()));
+                    counts.set(i, j, counts.get(i,j) * Math.log(numOfDocuments/documentFrequencies.get(j).size()));
                 }
             }
+            System.out.println(i+1+" files done");
         }
     }
 }

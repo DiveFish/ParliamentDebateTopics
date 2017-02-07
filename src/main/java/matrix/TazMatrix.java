@@ -13,7 +13,7 @@ import org.la4j.matrix.sparse.CRSMatrix;
 
 /**
  *
- * @author Patricia Fischer
+ * @author Daniël de Kok and Patricia Fischer
  */
 public class TazMatrix implements TermDocumentMatrix {
 
@@ -39,7 +39,7 @@ public class TazMatrix implements TermDocumentMatrix {
     
     /**
      *
-     * @return
+     * @return The frequency or tf.idf matrix
      */
     @Override
     public SparseMatrix counts() {
@@ -57,31 +57,30 @@ public class TazMatrix implements TermDocumentMatrix {
     
     /**
      *
-     * @param fileID
-     * @param articleContent
+     * @param fileID The file id
+     * @param articleContent The article content
      * @throws IOException
      */
     public void processFile(String fileID, List<Token> articleContent) throws IOException {
         
-        System.out.println(String.format("Add term frequencies of file %s to matrix", fileID));
+        System.out.println(String.format("Add term frequencies to matrix", fileID));
         Integer fileIDIndex = documentIndices.get(fileID);
         if (fileIDIndex == null) {
             throw new IOException(String.format("Unknown file ID: %s", fileID));
         }
 
         for (Integer token : tokensToIndices(articleContent)) {
-            if (!mostFrequent.contains(token)){
+            if (!mostFrequent.contains(token)) {
                 counts.set(fileIDIndex, token, counts.get(fileIDIndex, token)+1);
             }
         }
-        System.out.println(String.format("Done adding term frequencies of file %s to matrix", fileID));
+        System.out.println(String.format("Done with file %s", fileID));
     }
 
     /**
      * 
-     * @param sectionContent
-     * @param tokenIndices
-     * @return
+     * @param tokens The article content
+     * @return The indices for the tokens in the article
      * @throws IOException 
      */
     private List<Integer> tokensToIndices(List<Token> tokens) throws IOException {
@@ -105,15 +104,17 @@ public class TazMatrix implements TermDocumentMatrix {
     
     /**
      * 
+     * @param documentFrequencies 
      */
     private void countsToTfIdf(List<TIntList> documentFrequencies) {
         for (int i = 0; i < counts.rows(); i++) {
-            for(int j = 0; j < counts.columns(); j++){
-                if (!(documentFrequencies.get(j) == null)){
+            for(int j = 0; j < counts.columns(); j++) {
+                if (!(documentFrequencies.get(j) == null)) {
                     counts.set(i, j, counts.get(i,j) *
                         Math.log(counts.rows()/documentFrequencies.get(j).size()));
                 }
             }
+            System.out.println(i+1+" files done");
         }
     }    
 }

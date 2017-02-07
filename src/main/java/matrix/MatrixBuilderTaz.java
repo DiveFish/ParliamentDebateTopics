@@ -1,6 +1,9 @@
 package matrix;
 
+import clustering.KMC;
 import clustering.KMeans;
+import clustering.KMeansClustering;
+import gnu.trove.list.TIntList;
 import io.Layer;
 import io.TazReader;
 import io.VocabularyTaz;
@@ -20,30 +23,24 @@ import org.la4j.Vector;
  */
 public class MatrixBuilderTaz extends MatrixBuilder {
     
-    private static final int STOPWORD_LIST_SIZE = 150; //150;
+    private static final String CONLL_EXTENSION = ".conll.gz";
+    
+    private static final int STOPWORD_LIST_SIZE = 400; //150;
     
     private static final Layer LAYER = Layer.TOKEN;  //options: TOKEN or LEMMA
     
-    /*
-     * If you hardcode the file directory, please uncomment: File mainDir = new File(FILE_DIR);
-     * Otherwise, uncomment: File filesDir = new File(args[0]);
+    
+    /**
+     *
+     * @param collDir The directory of the data collection
+     * @throws IOException
      */
-    private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/taz/";
-    
-    private static final String OUTPUT_DIR = "./TazMatrices/";
-    
-    public static void main(String[] args) throws IOException {
+    public void buildMatrix(File collDir) throws IOException {
         
         // Locale change necessary to display doubles with dot, not comma (messes up csv format)
         Locale.setDefault(Locale.Category.FORMAT, Locale.ENGLISH);
         
-        if (args.length != 1) {
-            System.out.println("Wrong number of arguments.\nUsage: 1, provide path to data files");
-        }
-        //File mainDir = new File(args[0]);
-        
-        File mainDir = new File(FILE_DIR);
-        File[] directories = mainDir.listFiles();
+        File[] directories = collDir.listFiles();
         List<File> files = new ArrayList<>();
         for (File dir : directories) {
             File subDir = new File(dir.getAbsolutePath());
@@ -56,9 +53,10 @@ public class MatrixBuilderTaz extends MatrixBuilder {
         
         int filesDone = 0;
         for(File file : files) {
-            if (file.isFile() && file.getName().endsWith(".conll.gz")) {
+            if (file.isFile() && file.getName().endsWith(CONLL_EXTENSION)) {
                 // Extract article content
                 taz.processFile(file);
+                taz.deleteStopwords(taz.getArticleContent());
                 vocabulary.processFile(taz.getArticleID(), taz.getArticleContent());
             }
             System.out.println(++filesDone);
@@ -70,7 +68,7 @@ public class MatrixBuilderTaz extends MatrixBuilder {
         
         filesDone = 0;
         for(File file : files) {
-            if (file.isFile() && file.getName().endsWith(".conll.gz")) {
+            if (file.isFile() && file.getName().endsWith(CONLL_EXTENSION)) {
                 // Extract article content
                 taz.processFile(file);
                 // Add term frequencies to matrix
@@ -91,6 +89,7 @@ public class MatrixBuilderTaz extends MatrixBuilder {
         }
         */
         // Transform term-document matrix into tf.idf matrix
+        System.out.println("Calculate tf.idf matrix");
         tdm.tfIdf(vocabulary.documentFrequencies());
         /*
         System.out.println("Saving tf.idf matrix to csv");
@@ -99,11 +98,15 @@ public class MatrixBuilderTaz extends MatrixBuilder {
             pw2.close();
         }
         */
-        KMeans km = new KMeans(tdm.counts());
+        //KMeans km = new KMeans(10, tdm.counts());
+        //KMeansClustering km = new KMeansClustering(10, tdm.counts());
+        KMC kmc = new KMC(20, tdm.counts());
         System.out.println("Display k-means clusters");
-        km.clusters().stream().forEach((cluster) -> {
+        List<Vector> centroids = kmc.centroids();
+        List<TIntList> clusters = kmc.clusters(centroids);
+        for (TIntList cluster : clusters) {
             System.out.println(cluster);
-        });
+        }
         /*
         // Decompose tf.idf matrix by applying singular-value decomposition
         SingularValueDecompositor svd = new SingularValueDecompositor(tdm.counts());
