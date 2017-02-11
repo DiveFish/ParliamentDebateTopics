@@ -13,14 +13,14 @@ import matrix.MatrixBuilderTaz;
 public class InputHandler {
     
     
-    //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/taz/";
+    private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/taz/";
     
     //private static final String OUTPUT_DIR = "./TazMatrices/";
     
     
     //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized/";
     
-    private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized-samples/";
+    //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized-samples/";
     
     //private static final String FILE_DIR = "/home/patricia/NetBeansProjects/ParliamentDebateTopics/testFiles/";
 
@@ -32,12 +32,12 @@ public class InputHandler {
             System.out.println("Wrong number of arguments.Usage: 2, provide name of dataset (Polmine/Taz) path to data files");
         }
         
-        String dataset = args[0].toLowerCase();
+        //String dataset = args[0].toLowerCase();
         //String dataset = "polmine";
-        //String dataset = "taz";
+        String dataset = "taz";
         
-        File dataPath = new File(args[1]);
-        //File dataPath = new File(FILE_DIR);
+        //File dataPath = new File(args[1]);
+        File dataPath = new File(FILE_DIR);
         if (!dataPath.isDirectory()) {
             throw new IOException("Given directory name is not a valid directory.");
         }
