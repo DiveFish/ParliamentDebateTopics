@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import org.la4j.iterator.MatrixIterator;
 import org.la4j.matrix.SparseMatrix;
 import org.la4j.matrix.sparse.CRSMatrix;
 
@@ -107,6 +108,22 @@ public class TazMatrix implements TermDocumentMatrix {
      * @param documentFrequencies 
      */
     private void countsToTfIdf(List<TIntList> documentFrequencies) {
+        
+        int numOfDocuments = counts.rows();
+        MatrixIterator matIter = counts.iterator();
+        
+        while (matIter.hasNext()) {
+            double val = matIter.next();
+            int i = matIter.rowIndex();
+            int j = matIter.columnIndex();
+            
+            int df = documentFrequencies.get(j).size();
+            if (df > 0 && val > 0) {
+                counts.set(i, j, val * Math.log(numOfDocuments/df));
+            }
+        }
+        
+        /*
         for (int i = 0; i < counts.rows(); i++) {
             for(int j = 0; j < counts.columns(); j++) {
                 if (!(documentFrequencies.get(j) == null)) {
@@ -116,5 +133,6 @@ public class TazMatrix implements TermDocumentMatrix {
             }
             System.out.println(i+1+" files done");
         }
+        */
     }    
 }

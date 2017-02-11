@@ -10,6 +10,9 @@ import org.la4j.matrix.SparseMatrix;
 import org.la4j.matrix.sparse.CRSMatrix;
 import io.Layer;
 import io.PolMineReader;
+import org.la4j.iterator.VectorIterator;
+import org.la4j.Vector;
+import org.la4j.iterator.MatrixIterator;
 
 /**
  * 
@@ -117,7 +120,37 @@ public class PolMineMatrix implements TermDocumentMatrix {
      * @param documentFrequencies The document frequencies of all terms
      */
     private void countsToTfIdf(List<TIntList> documentFrequencies) {
+        
         int numOfDocuments = counts.rows();
+        MatrixIterator matIter = counts.iterator();
+        
+        while (matIter.hasNext()) {
+            double val = matIter.next();
+            int i = matIter.rowIndex();
+            int j = matIter.columnIndex();
+            int df = documentFrequencies.get(j).size();
+            if (df > 0 && val > 0) {
+                counts.set(i, j, val * Math.log(numOfDocuments/df));
+            }
+        }
+        
+        /*
+        for (int i = 0; i < numOfDocuments; i++) {
+            Vector row = counts.getRow(i);
+            VectorIterator vIter = row.iterator();
+            while (vIter.hasNext()) {
+                double val = vIter.next();
+                int j = vIter.index();
+                int df = documentFrequencies.get(j).size();
+                if (df > 0 && val > 0) {
+                    row.set(j, val * Math.log(numOfDocuments/df));
+                }
+            }
+            counts.setRow(i, row);
+            System.out.println(i+1+" files done");
+        }
+        
+        /* LESS EFFICIENT:
         for (int i = 0; i < numOfDocuments; i++) {
             for(int j = 0; j < counts.columns(); j++){
                 if (!(documentFrequencies.get(j) == null)){
@@ -126,5 +159,6 @@ public class PolMineMatrix implements TermDocumentMatrix {
             }
             System.out.println(i+1+" files done");
         }
+        */
     }
 }

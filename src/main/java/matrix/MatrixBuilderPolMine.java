@@ -23,6 +23,8 @@ public class MatrixBuilderPolMine extends MatrixBuilder {
 
     private static final int STOPWORD_LIST_SIZE = 150;//150;
     
+    private static final int NUM_OF_CLUSTERS = 20;
+    
     private static final Layer LAYER = Layer.TOKEN;  //options: TOKEN or LEMMA
     
     /**
@@ -96,7 +98,7 @@ public class MatrixBuilderPolMine extends MatrixBuilder {
         */
         
         System.out.println("Retrieve k-means clusters");
-        KMC kmc = new KMC(20, tdm.counts());
+        KMC kmc = new KMC(NUM_OF_CLUSTERS, tdm.counts());
         //KMeansClustering kmc = new KMeansClustering(20, tdm.counts());
         List<Vector> centroids = kmc.centroids();
         List<TIntList> clusters = kmc.clusters(centroids);
