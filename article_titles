@@ -1,0 +1,29 @@
+1	Strauß	Strauß	_	NE	dat:02.01.88|nr:11|tf:VF|mpos:NE|case:nominative|number:singular|gender:masculine	2	SUBJ	_	_
+2	begräbt	begraben	_	VVFIN	dat:02.01.88|nr:11|tf:LK|mpos:VVFIN|person:3|number:singular|mood:indicative|tense:present	0	ROOT	_	_
+3	Kaltes	kalt	_	ADJA	dat:02.01.88|nr:11|tf:MF|mpos:ADJA|case:nominative|number:singular|gender:neuter	4	ATTR	_	_
+4	Kriegsbeil	Kriegsbeil	_	NN	dat:02.01.88|nr:11|tf:MF|mpos:NN|case:nominative|number:singular|gender:neuter	2	OBJA	_	_
+
+
+1	Pro	pro	_	APPR	nr:14|tf:UK|dat:02.01.88|mpos:APPR|case:accusative	4	PP	_	_
+2	Atommüll-Faß	Atommüll-Faß	_	NN	tf:UK|dat:02.01.88|nr:14|mpos:NN|case:accusative|number:singular|gender:neuter	1	PN	_	_
+3	ein	ein	_	ART	dat:02.01.88|nr:14|tf:UK|mpos:ART|case:accusative|number:singular|gender:neuter	4	DET	_	_
+4	Pröbchen	Pröbchen	_	NN	nr:14|tf:UK|dat:02.01.88|mpos:NN|case:accusative|number:singular|gender:neuter	0	ROOT	_	_
+
+
+TITLE
+1	Prognosen	Prognose	_	NN	tf:UK|dat:02.01.88|nr:5|mpos:NN|case:nominative|number:plural|gender:feminine	0	ROOT	_	_
+
+BEGINNING OF ARTICLE
+1	1988	1988	_	CARD	dat:02.01.88|nr:5|tf:VF|mpos:CARD	2	ZEIT	_	_
+2	wird	werden%aux	_	VAFIN	nr:5|tf:LK|dat:02.01.88|mpos:VAFIN|person:3|number:singular|mood:indicative|tense:present	0	ROOT	_	_
+3	endlich	endlich	_	ADV	dat:02.01.88|nr:5|tf:MF|mpos:ADV	6	ADV	_	_
+4	die	d	_	ART	tf:MF|dat:02.01.88|nr:5|mpos:ART|case:accusative|number:singular|gender:feminine	5	DET	_	_
+5	Revolution	Revolution	_	NN	nr:5|tf:MF|dat:02.01.88|mpos:NN|case:accusative|number:singular|gender:feminine	2	SUBJ	_	_
+6	kommen	kommen	_	VVINF	dat:02.01.88|nr:5|tf:VC|mpos:VVINF	2	AUX	_	_
+7	.	.	_	$.	dat:02.01.88|nr:5|tf:UK|mpos:$.	6	-PUNCT-	_	_
+
+
+1	Spazieren	spazieren	_	VVFIN	dat:02.01.88|nr:7|tf:UK|mpos:VVINF	0	ROOT	_	_
+2	für	für	_	APPR	dat:02.01.88|nr:7|tf:UK|mpos:APPR|case:accusative	1	PP	_	_
+3	den	d	_	ART	dat:02.01.88|nr:7|tf:UK|mpos:ART|case:accusative|number:singular|gender:masculine	4	DET	_	_
+4	Stahl	Stahl	_	NN	dat:02.01.88|nr:7|tf:UK|mpos:NN|case:accusative|number:singular|gender:masculine	2	PN	_	_
