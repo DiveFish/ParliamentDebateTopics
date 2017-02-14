@@ -4,9 +4,7 @@ import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import static matrix.VectorMeasures.euclideanDistance;
 import org.la4j.Vector;
@@ -28,6 +26,22 @@ public class KMC {
     public KMC(int numOfClusters, Matrix documentVectors) {
         this.numOfClusters = numOfClusters;
         this.documentVectors = documentVectors;
+    }
+    
+    /**
+     * Create several clusters to decide for best one.
+     *
+     * @param n Number of cluster calculations
+     * @return
+     * @throws IOException
+     */
+    public List<List<TIntList>> nClusters(Integer n) throws IOException {
+        //TODO: pick best cluster; calculate best centroids and then retrieve clusters?
+        List<List<TIntList>> clusterColl = new ArrayList();
+        for (int i = 0; i < n; i++) {
+            clusterColl.add(clusters(centroids()));
+        }
+        return clusterColl;
     }
     
     /**
@@ -87,7 +101,7 @@ public class KMC {
         List<Vector> centroids = new ArrayList<>();
         
         // Choose random centroids from document vectors
-        Random rand = new Random(28); //TODO: give as argument to method (?)
+        Random rand = new Random(28);
         while (centroids.size() < numOfClusters) {
             int randomRow = rand.nextInt(num_of_docs);
             if (!centroids.contains(documentVectors.getRow(randomRow))) {
@@ -99,10 +113,9 @@ public class KMC {
         // idx of number in numOfClusterElements is centroid's idx in centroid list
         int[] numOfClusterElements = new int[numOfClusters];  
         List<Vector> adjustedCentroids = new ArrayList();
-        Vector emptyVector = SparseVector.zero(vector_length);
         
         while (adjustedCentroids.size() < numOfClusters) {
-            adjustedCentroids.add(emptyVector);
+            adjustedCentroids.add(SparseVector.zero(vector_length));
         }
         
         boolean converged = false;
@@ -120,21 +133,25 @@ public class KMC {
                         closestCentroid = centroid;
                     }
                 }
-                int idx = centroids.indexOf(closestCentroid);
-                adjustedCentroids.set(idx, adjustedCentroids.get(idx).add(closestCentroid));
-                numOfClusterElements[idx] = numOfClusterElements[idx]+1;
+                int idx = centroids.indexOf(closestCentroid); // use for-loop (keep track of minimum distance)
+                adjustedCentroids.set(idx, adjustedCentroids.get(idx).add(documentVectors.getRow(row)));
+                numOfClusterElements[idx]++;
             }
             
             // Distance between old and recomputed centroids
             double distOfCentr = 0;
             for (int idx = 0; idx < adjustedCentroids.size(); idx++) {
                 
+                // divide sum of cluster vectors by number of vectors in this cluster
                 adjustedCentroids.set(idx, adjustedCentroids.get(idx).divide(numOfClusterElements[idx]));
                 
                 distOfCentr += euclideanDistance(centroids.get(idx), adjustedCentroids.get(idx));   
                 
-                centroids.set(idx, adjustedCentroids.get(idx));
-                adjustedCentroids.set(idx, emptyVector);
+                //centroids is now adjustedCentroids centroid = new arraylist
+                //create empty centroid list at beginning of each loop and fill it in loop
+                //next iteration of loop
+                centroids.set(idx, adjustedCentroids.get(idx)); // make adjusted centroid the new centroid
+                adjustedCentroids.set(idx, SparseVector.zero(vector_length));
             }
                 
             if (distOfCentr/centroids.size() < 10) {
