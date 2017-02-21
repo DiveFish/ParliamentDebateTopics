@@ -1,0 +1,66 @@
+PolMine Sample: 10 clusters, 400 stopwords
+34
+Calculate tf.idf matrix
+33 sections done
+Retrieve k-means clusters
+{4, 5, 9, 11, 14, 17, 18, 23, 24, 25, 26, 27}
+[Kroaten, Kroatien, IFOR, Mostar, Arbeitslosenhilfe, Bosnien-Herzegowina, Ostslawonien, Serben, Koschnick]
+[Burundi, Opferschutz, Entwicklungszusammenarbeit, Wehrbeauftragten, IDA, Entwicklungspolitik, Terminals, Wehrbeauftragte, kombinierten]
+[Tschechischen, tschechischen, tschechische, Tschechen, Vertriebenen, Sudetendeutschen, Vermögensteuer, Prag, Landsmannschaft]
+[Telekommunikationsgesetz, Kulturpolitik, Mittlerorganisationen, Gelöbnis, Regulierungsbehörde, Kulturarbeit, Bayerische, Telekom, Auswärtige]
+[Umweltverträglichkeitsprüfung, forstwirtschaftliche, Flächen, Wismut, Diagnoseverschlüsselung, Naturschutzflächen, ICD, Flächenerwerbsverordnung, UVP]
+[Benin, Ausstattungshilfe, Foto, Trainer, Elten, Busse, Wehrsoldzahlung, Geiseln, BGS]
+[Bernd, 13/5107, Geißler, Kündigungsschutz, Tätä, Urlaubstage, Sozialauswahl, Lohnfortzahlung, 13/5088]
+[Agrarbericht, Piloten, Landwirte, Wiesen, Bauern, Sielaff, CWÜ, Tiefflug, Tiefflüge]
+[Zusatzfragen, Generationenvertrag, Schwangerschaftsabbruch, Geschäftsbereich, Staatsregierung, Schwangerschaftsabbrüchen, Freihandelsabkommen, Schwangeren-, bayerischen]
+[Andres, Religionsunterricht, Währungsunion, LER, Wieczorek-Zeul, Religionsunterrichts, 141, Lehrfach, Bräutigam]
+[Apotheken, Dounreay, Rechenzentren, Korruption, Kirschner, Krankenkassen, ICD, Krankenversicherung, Kriminalität]
+[Staatsangehörigkeit, [Hannover, Hanf, Enteignungen, Senatorin, Jahreswirtschaftsbericht, Anbau, Einbürgerung, Grundstücke]
+
+{2, 7, 10, 19, 22, 33}
+[Staatsminister, Hoyer, IfA, Lehrstellen, Auslandsvertretungen, Juden, Ziesels, Ziesel, Deutschland-Stiftung]
+[Ausländerpolitik, Marschewski, Ausländern, Ausländerrecht, Schmalz-Jacobsen, Ausländer, Einzelhandel, Landfriedensbruch, Aufenthaltsrecht]
+[Energieversorgung, Kernenergie, Atomkraftwerke, Böden, Tschernobyl, Telematik, Bodenschutz, Reaktoren, Atomenergie]
+[Brand, Düsseldorfer, Werkstoff, Petten, Styropor, Fallahian, Bauten, PVC, indonesischen]
+[Vergewaltigung, Iran, Transrapid, Widerspruchsklausel, Öffnungszeiten, Denkmal, Ladenöffnungszeiten, Mahnmal, Atomenergie]
+[Understanding", Pressefreiheit, "Memorandum, Konferenz, Gorleben, Upahl, Aufruf, Schienen, Gundremmingen]
+
+{32}
+[Organe, Organtransplantation, Hirnfunktionen, Todes, Zustimmungslösung, Hirntod, Entnahme, Organspende, Organentnahme]
+
+{6, 8, 12}
+[Wattenmeer, chinesischen, Nordsee, China, chinesische, Dalai-Lama, Tibet, Flecken, Wohnungsbau]
+[Expo, Sammelübersicht, Weltausstellung, China, Heidecke, Verwaltungsgerichtsordnung, Petenten, Altschulden, Genehmigungsverfahren]
+[Ladendiebstähle, Psychogruppen, Mieter, Informationsgesellschaft, Enquete-Kommission, Ladendiebstahl, Umweltrat, Altschulden, Genehmigungsverfahren]
+
+{28}
+[Postfilialen, Ehrenschutz, Postbank, "Soldaten, Post, Mörder", Postagenturen, Mörder, Bundeswehrsoldaten]
+
+{13, 16}
+[Zwischenlager, Staatsminister, Burundi, Rheinsberg, Rußland, Zelle, OSZE, NATO, Kesselwagen]
+[Pflegestufe, Rüstungskontrolle, Abrüstungsbericht, Olaf, Pflüger, Abrüstung, Stufe, Feldmann, Waffensysteme]
+
+{1, 3, 21, 30}
+[Dusch, Mehrarbeit, Bundesamt, ÖTV, BAFl, UNHCR, Entscheider, BvS, Überstunden]
+[Bremer, Bernhart, Werften, Jelzin, Upahl, Rußland, Mecklenburg-Vorpommern, Militärgeschichtlichen, Vulkan]
+[Bremer, Zusatzfragen, BVV, Treuhandanstalt, Werften, Verbund, Haushaltssperre, BVS, Vulkan]
+[Sondersitzung, Geschäftsordnungsausschuß, Untersuchungsausschuß, Werften, Rechnungsprüfungsausschuß, Untersuchungsausschusses, Ringstorff, 13/5233, BvS]
+
+{0}
+[Postfilialen, Remailing, Rindfleisch, BSE, Verbraucherschutz, nichtehelichen, Jugendbericht, Tiermehl, Binnenschiffahrt]
+
+{15, 20, 29}
+[Konsolidierungsbedarf, Reformprojekt, Erbschaftsteuer, BIP, Privatvermögen, Geldvermögen, Lohnzurückhaltung, Vermögensteuer, Lohnfortzahlung]
+[Brasilien, Tropenwälder, Wälder, Krankenkassen, tropischen, Selbsthilfegruppen, Hausärzte, Krankenversicherung, Gesundheitsförderung]
+[Huhn, Katzer, Kürzungspaket, Selbstbeteiligung, Möllemann, 13/5327, Gerhardt, Schwein, mitfinanzierten]
+
+{31}
+[Aktionsplattform, Anti-Personen-Minen, Kurden, Verpackungsverordnung, Minen, Diuron, Drogen, Weltfrauenkonferenz, Alkohol]
+
+------------------------------------------------------------------------
+BUILD SUCCESS
+------------------------------------------------------------------------
+Total time: 41.684s
+Finished at: Mon Feb 20 07:42:36 CET 2017
+Final Memory: 5M/86M
+------------------------------------------------------------------------
