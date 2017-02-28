@@ -18,4 +18,6 @@ public interface Reader {
     public List<Map<String, Integer>> getContent();
     
     public List<String> getSectionIDs();
+    
+    public Map<String, List<String>> getMetadata();
 }
