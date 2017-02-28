@@ -24,15 +24,18 @@ import org.xml.sax.helpers.DefaultHandler;
 public class ReaderPolMine implements Reader {
     
     private final Layer layer;
+
+    private final Map<String, List<String>> debateMetadata;  // file ID <-> date - speaker - party
+    
+    private final SAXParserFactory parserFactory;
     
     private static List<Map<String, Integer>> debateContent;
     
     private static List<String> debateIDs;
 
-    private final SAXParserFactory parserFactory;
-
     public ReaderPolMine(Layer layer) {
         this.layer = layer;
+        debateMetadata = new HashMap();
         parserFactory = SAXParserFactory.newInstance();
         parserFactory.setNamespaceAware(false);
         parserFactory.setValidating(false);
@@ -58,6 +61,7 @@ public class ReaderPolMine implements Reader {
                   saxParser.parse(xmlFile, xmlHandler);
                   debateIDs.add(debateID);
                   debateContent.add(xmlHandler.debate());
+                  debateMetadata.putIfAbsent(debateID, xmlHandler.metadata());
             }
             
         } catch (ParserConfigurationException | SAXException | IOException e) {
@@ -66,20 +70,27 @@ public class ReaderPolMine implements Reader {
     }
     
     @Override
-    public List<Map<String, Integer>> getContent(){
+    public List<Map<String, Integer>> getContent() {
         return debateContent;
     }
     
     @Override
-    public List<String> getSectionIDs(){
+    public List<String> getSectionIDs() {
         return debateIDs;
+    }
+    
+    @Override
+    public Map<String, List<String>> getMetadata() {
+        return debateMetadata;
     }
     
 
     private class XMLHandler extends DefaultHandler {
     
         private Map<String, Integer> content;
+        private List<String> metadata;
 
+        private boolean inDate;
         private boolean inToken;
         
         private final Set<String> stopwords;
@@ -87,18 +98,26 @@ public class ReaderPolMine implements Reader {
         public XMLHandler() throws IOException {
             this.stopwords = Stopwords.stopwords();
             content = new HashMap();
+            metadata = new ArrayList<String>() {{add(""); add(""); add("");}};
+            inDate = false;
             inToken = false;
         }
 
         public Map<String, Integer> debate() {
             return content;
         }
+        
+        public List<String> metadata() {
+            return metadata;
+        }
 
         @Override
         public void characters(char[] ch, int start, int length) throws SAXException {
             if (inToken) {
-                String word = new String(ch, start, length);
-                if (!stopwords.contains(word.trim())){
+                // Remove all leading and trailing punctuation?
+                String word = new String(ch, start, length).trim();//.replaceFirst("^[^a-zA-Z]+", "").replaceAll("[^a-zA-Z]+$", "");
+                
+                if (!stopwords.contains(word.toLowerCase())){
                     if (!content.containsKey(word)) {
                         content.putIfAbsent(word, 1);
                     }
@@ -106,6 +125,13 @@ public class ReaderPolMine implements Reader {
                         content.put(word, content.get(word)+1);
                     }
                 }
+            }
+            if (inDate) {
+                String day = new String(ch, start, length).trim(); //1996-02-08
+                int l = day.length();
+                // Convert to same format as taz article dates: 08.02.1996
+                day = day.substring(l-2)+"."+day.substring(l-5, l-3)+"."+day.substring(0,l-6);
+                metadata.set(0, day);
             }
         }
 
@@ -118,6 +144,13 @@ public class ReaderPolMine implements Reader {
                 case "body":
                     content = new HashMap();
                     break;
+                case "speaker":
+                    metadata.set(1, attrs.getValue("name"));
+                    metadata.set(2, attrs.getValue("party"));
+                    break;
+                case "date":
+                    inDate = true;
+                    break;
             }
         }
 
@@ -128,6 +161,9 @@ public class ReaderPolMine implements Reader {
                     inToken = false;
                     break;
                 case "body":
+                    break;
+                case "date":
+                    inDate = false;
                     break;
             }
         }
