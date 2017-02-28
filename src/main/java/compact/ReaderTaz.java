@@ -10,15 +10,21 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
+import org.apache.commons.math3.util.Pair;
 
 /**
  * Read CONLL files from taz corpus. Save article IDs and article content
@@ -36,7 +42,7 @@ public class ReaderTaz implements Reader {
     
     private static List<Map<String, Integer>> fileContent;  // content of all sections, each section one HashMap
     
-    private static List<String> sectionIDs; // IDs of all sections
+    private static List<String> sectionIds; // IDs of all sections
     
     private static final Pattern P_ID = Pattern.compile("nr:([0-9]+)");
     
@@ -57,10 +63,10 @@ public class ReaderTaz implements Reader {
     @Override
     public void processFile(File conllFile) throws IOException {
         fileContent = new ArrayList();
-        sectionIDs = new ArrayList();
-        String fileID = conllFile.getName();
+        sectionIds = new ArrayList();
+        String fileId = conllFile.getName();
         
-        System.out.println(String.format("Processing file %s", fileID));
+        System.out.println(String.format("Processing file %s", fileId));
         
         try (CONLLReader conllReader = new CONLLReader(new BufferedReader(new InputStreamReader(new GZIPInputStream(
                 new FileInputStream(conllFile)))))) {
@@ -75,27 +81,27 @@ public class ReaderTaz implements Reader {
                     newsDate =  md.group().substring(4);   //Find regex "dat: num{2}.num{2}.num{2}" in features
                 }
                 else {
-                    System.err.printf("No date found in article %s", fileID);
+                    System.err.printf("No date found in article %s", fileId);
                 }
                 
                 Matcher mID = P_ID.matcher(feats);
-                int tokenID = 0;
+                int tokenId = 0;
                 if (mID.find()) {
-                    tokenID = Integer.parseInt(mID.group(0).substring(3));   //Find regex "nr:[0-9]+" in features
+                    tokenId = Integer.parseInt(mID.group(0).substring(3));   //Find regex "nr:[0-9]+" in features
                 }
                 else {
-                    System.err.printf("No ID found in article %s", fileID);
+                    System.err.printf("No ID found in article %s", fileId);
                 }
-                String sectionID = fileID + "_" + tokenID;
+                String sectionId = fileId + "_" + tokenId;
                 
                 // Encountered new article section
-                if (!sectionIDs.contains(sectionID)) {
-                    sectionIDs.add(sectionID);
-                    newsMetadata.putIfAbsent(sectionID, Arrays.asList(newsDate));
+                if (!sectionIds.contains(sectionId)) {
+                    sectionIds.add(sectionId);
+                    newsMetadata.putIfAbsent(sectionId, Arrays.asList(newsDate));
                     fileContent.add(new HashMap());
                 }
                 
-                Map<String, Integer> wordFrequencies = fileContent.get(sectionIDs.indexOf(sectionID));
+                Map<String, Integer> wordFrequencies = fileContent.get(sectionIds.indexOf(sectionId));
                 
                 for (Token token : sent) {
                     String value = layer == Layer.LEMMA ?
@@ -130,7 +136,7 @@ public class ReaderTaz implements Reader {
     
     @Override
     public List<String> getSectionIDs() {
-        return sectionIDs;
+        return sectionIds;
     }
     
     @Override
@@ -138,5 +144,66 @@ public class ReaderTaz implements Reader {
         return newsMetadata;
     }
     
+    /**
+     * Find the earliest document in the cluster. Sort documents by date and
+     * return doc id with earliest date.
+     *
+     * @param cluster The cluster of documents
+     * @param documentIndices The document indices
+     * @return The doc id of earliest date in cluster
+     */
+    public int earliestDoc(TIntList cluster, BiMap<String, Integer> documentIndices) {
+        SortedSet<Pair<Integer, Date>> sortedDates = new TreeSet<>((o1, o2) -> {
+            int cmp = o1.getValue().compareTo(o2.getValue());
+            if (cmp == 0) {
+                return o1.getKey().compareTo(o2.getKey());
+            }
+            return -cmp;
+        });
+        
+        Map<Integer, Date> dateIds = dateByID(documentIndices);
+        
+        for (int i = 0; i < dateIds.size(); i++) {
+            sortedDates.add(new Pair<>(i, dateIds.get(i)));
+        }
+        System.out.printf("Date: %s", sortedDates.first().getValue());
+       return sortedDates.first().getKey();
+   }
    
+    /**
+     * Map each date to the document index. Original format is "file ID - doc idx"
+     * and "file ID - date string", should be "doc idx - date"
+     * 
+     * @param documentIndices The document indices
+     * @return The dates by document indices
+     */
+   private Map<Integer, Date> dateByID(BiMap<String, Integer> documentIndices) {
+       
+       BiMap<Integer, String> docsByIdx = documentIndices.inverse();
+       Map<Integer, Date> dateIDs = new HashMap();
+       
+       for (int i = 0; i < docsByIdx.size(); i++) {
+           dateIDs.putIfAbsent(i, stringToDate(newsMetadata.get(docsByIdx.get(i)).get(0)));  // get date from metadata
+       }
+       return dateIDs;
+   }
+   
+   /**
+    * Convert string to date.
+    * 
+    * @param dateString The string to be converted
+    * @return The date
+    */
+   private Date stringToDate(String dateString) {
+        SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yyyy");
+        Date date = new Date();
+        try {
+            date = formatter.parse(dateString);
+            return date;
+
+        } catch (ParseException e) {
+            System.err.println("Cannot parse date");
+        }
+        return date;
+   }
 }
