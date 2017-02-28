@@ -5,8 +5,6 @@ import com.google.common.collect.HashBiMap;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,7 +29,7 @@ public class Vocabulary {
     
     private final TIntList tokenCounts;  //for getting the most frequent tokens/ stopwords
     
-    private final List<TIntList> documentFrequencies; //stores for each term the documents in which it occurs
+    private final TIntList documentFrequencies; //stores for each term the documents in which it occurs
     
     /**
      * Vocabulary can be created on lemmas or tokens.
@@ -45,7 +43,7 @@ public class Vocabulary {
         documentIndices = HashBiMap.create();
         tokenIndices = HashBiMap.create();
         tokenCounts = new TIntArrayList();
-        documentFrequencies = new ArrayList<>();
+        documentFrequencies = new TIntArrayList();
     }
     
     // processFile()
@@ -62,7 +60,7 @@ public class Vocabulary {
      */
     public void processSection(String sectionID, Map<String, Integer> wordFrequencies) throws IOException {
         extractSectionID(sectionID);
-        extractVocabulary(documentIndices.get(sectionID), wordFrequencies);
+        extractVocabulary(wordFrequencies);
     }
     
     /**
@@ -71,7 +69,7 @@ public class Vocabulary {
      * 
      * @param wordFrequencies The content represented as words and their respective frequency
      */
-    private void extractVocabulary(Integer fileIDIndex, Map<String, Integer> wordFrequencies) throws IOException {
+    private void extractVocabulary(Map<String, Integer> wordFrequencies) throws IOException {
         for (Map.Entry<String, Integer> entry : wordFrequencies.entrySet()) {
             String token = entry.getKey();
             Integer frequency = entry.getValue();
@@ -79,25 +77,16 @@ public class Vocabulary {
             if (index == null) {
                 index = tokenIndices.size();
                 tokenIndices.put(token, index);
-                tokenCounts.add(1);  // add count 1 for this token at end of list (position will equal token index)
-                
+                tokenCounts.add(frequency);
             }
             else {
                 tokenCounts.set(index, tokenCounts.get(index) + frequency);
             }
 
-            //Add all document indices to document index list of respective
-            //token to obtain token's document frequency
             if (documentFrequencies.size() == index) {
-                documentFrequencies.add(new TIntArrayList());
-            }
-
-            TIntList documents = documentFrequencies.get(index);
-            // Use binary search for O(log N) search.
-            int idx = documents.binarySearch(fileIDIndex);
-            if (idx < 0) { // fileIDIndex not yet in document list of this token
-                idx = ~idx;
-                documents.insert(idx, fileIDIndex);
+                documentFrequencies.add(1);
+            } else {
+                documentFrequencies.set(index, documentFrequencies.get(index) + 1);
             }
         }
     }
@@ -142,7 +131,7 @@ public class Vocabulary {
      *
      * @return A list of document index lists
      */
-    public List<TIntList> documentFrequencies() {
+    public TIntList documentFrequencies() {
         return documentFrequencies;
     }   
 }
