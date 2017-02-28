@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Load stopword lists from files.
+ * Load stopword list from file.
  *
  * @author Patricia Fischer
  */
@@ -19,12 +19,6 @@ public class Stopwords {
         
         Set<String> stopwordList = new HashSet();
         try(BufferedReader br = new BufferedReader(new FileReader("./src/main/resources/stopwords.txt"))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                stopwordList.add(line.trim());
-            }
-        }
-        try(BufferedReader br = new BufferedReader(new FileReader("./src/main/resources/stopwords_capitalized.txt"))) {
             String line;
             while ((line = br.readLine()) != null) {
                 stopwordList.add(line.trim());
