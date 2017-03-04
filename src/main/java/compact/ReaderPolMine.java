@@ -1,5 +1,6 @@
 package compact;
 
+import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,8 +32,8 @@ public class ReaderPolMine implements Reader {
     
     private static List<Map<String, Integer>> debateContent;
     
-    private static List<String> debateIDs;
-
+    private static List<String> debateIds;
+    
     public ReaderPolMine(Layer layer) {
         this.layer = layer;
         debateMetadata = new HashMap();
@@ -50,7 +51,7 @@ public class ReaderPolMine implements Reader {
     @Override
     public void processFile(File xmlFile) throws IOException{
         debateContent = new ArrayList();
-        debateIDs = new ArrayList();
+        debateIds = new ArrayList();
         try {
             SAXParser saxParser = parserFactory.newSAXParser();
             XMLHandler xmlHandler = new XMLHandler();
@@ -59,7 +60,7 @@ public class ReaderPolMine implements Reader {
             if (debateID.endsWith(".xml")){
                   System.out.println(String.format("Parsing file %s ...", debateID));
                   saxParser.parse(xmlFile, xmlHandler);
-                  debateIDs.add(debateID);
+                  debateIds.add(debateID);
                   debateContent.add(xmlHandler.debate());
                   debateMetadata.putIfAbsent(debateID, xmlHandler.metadata());
             }
@@ -76,7 +77,7 @@ public class ReaderPolMine implements Reader {
     
     @Override
     public List<String> getSectionIDs() {
-        return debateIDs;
+        return debateIds;
     }
     
     @Override
@@ -116,8 +117,23 @@ public class ReaderPolMine implements Reader {
             if (inToken) {
                 // Remove all leading and trailing punctuation?
                 String word = new String(ch, start, length).trim();//.replaceFirst("^[^a-zA-Z]+", "").replaceAll("[^a-zA-Z]+$", "");
+               /*
+                StringBuilder, iterate over array character by character and check if its a character
+                function which tells whether sth is considered unicode <-> punctuation
+                */
                 
-                if (!stopwords.contains(word.toLowerCase())){
+                StringBuilder sb = new StringBuilder();
+                for(char c : word.toCharArray()) { 
+                    int cInt = (int)c;
+                    // numbers; characters and Umlaute (upper +  lower case); "ß"; "/" (as in "CDU/CSU); "-" (hyphen)
+                    if (cInt == (38) || cInt == 45 || cInt == 128 || cInt == 196 || cInt == 214 || cInt == 220 || cInt == 223 || cInt == 228 || cInt == 246 || cInt == 252 || (cInt < 58 && cInt > 46) || (cInt < 91 && cInt > 64) || (cInt < 123 && cInt > 96)) {
+                        sb.append(c);
+                    }                    
+                }
+                
+                word = sb.toString();
+                
+                if (!stopwords.contains(word.toLowerCase()) && (word.length() > 0)) {
                     if (!content.containsKey(word)) {
                         content.putIfAbsent(word, 1);
                     }
