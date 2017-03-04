@@ -112,8 +112,13 @@ public class ReaderTaz implements Reader {
                     }
                     
                     // Exclude all words except proper nouns or proper and common nouns
+                    //if (!token.getPosTag().or("_").equals("CARD")) {
+                    //if (!token.getPosTag().or("_").equals("TRUNC")) {    
+                    //if (!token.getPosTag().or("_").equals("VVFIN")) {    
+                    if (!token.getPosTag().or("_").equals("VVPP")) {    
+                    //if (!token.getPosTag().or("_").equals("ADJA")||token.getPosTag().or("_").equals("ADV")||token.getPosTag().or("_").equals("ADJD")) {
                     //if (!token.getPosTag().or("_").equals("NE")) {
-                    if (!(token.getPosTag().or("_").equals("NN")||token.getPosTag().or("_").equals("NE"))) {
+                    //if (!(token.getPosTag().or("_").equals("NN")||token.getPosTag().or("_").equals("NE"))) {
                         continue;
                     }
                     
@@ -166,7 +171,7 @@ public class ReaderTaz implements Reader {
         for (int i = 0; i < dateIds.size(); i++) {
             sortedDates.add(new Pair<>(i, dateIds.get(i)));
         }
-        System.out.printf("Date: %s", sortedDates.first().getValue());
+        System.out.printf("Date: %s, doc %s", sortedDates.first().getValue(), sortedDates.first().getKey());
        return sortedDates.first().getKey();
    }
    
