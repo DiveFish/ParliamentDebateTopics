@@ -2,9 +2,7 @@ package compact;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.Iterables;
-import gnu.trove.list.TDoubleList;
 import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.io.IOException;
@@ -34,15 +32,12 @@ public class TermDocumentMatrix {
 
     private final BiMap<String, Integer> tokenIndices;
 
-    private final Set<Integer> mostFrequent;
-
     private static SparseMatrix counts;
 
     public TermDocumentMatrix(BiMap<String, Integer> documentIndices,
                               BiMap<String, Integer> tokenIndices, Set<Integer> mostFrequent) {
         this.documentIndices = documentIndices;
         this.tokenIndices = tokenIndices;
-        this.mostFrequent = mostFrequent;
         counts = CRSMatrix.zero(documentIndices.size(), tokenIndices.size());
     }
 
@@ -74,9 +69,7 @@ public class TermDocumentMatrix {
 
         for (Map.Entry<String, Integer> entry : wordFrequencies.entrySet()) {
             Integer tokenID = tokenIndices.get(entry.getKey());
-            //if (!mostFrequent.contains(tokenID)) {
             counts.set(fileIDIndex, tokenID, counts.get(fileIDIndex, tokenID) + entry.getValue());
-            //}
         }
     }
 
