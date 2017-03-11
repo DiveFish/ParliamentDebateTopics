@@ -5,6 +5,7 @@ import gnu.trove.list.array.TIntArrayList;
 
 import java.io.IOException;
 import java.util.*;
+import org.apache.commons.math3.util.Pair;
 
 import org.la4j.Vector;
 import org.la4j.Matrix;
@@ -41,12 +42,7 @@ public class KMeansClustering {
      * @throws IOException
      */
     public List<TIntList> nClusters(Integer n) throws IOException {
-        /*
-        List<List<TIntList>> clusterColl = new ArrayList();
-        for (int i = 0; i < n; i++) {
-            clusterColl.add(clusters(centroids()));
-        }
-        */
+        
         double maximum = -Double.MAX_VALUE;
         List<TIntList> bestCluster = new ArrayList<>();
         List<TIntList> cluster;
@@ -131,8 +127,6 @@ public class KMeansClustering {
             centroids.add(documentVectors.getRow(doc));
         }
 
-        normalizeDocumentVectors(documentVectors);
-
         for (int iter = 0; iter < 3; iter++) {
             double objective = 0;
 
@@ -189,5 +183,29 @@ public class KMeansClustering {
             documentVectors.setRow(i, doc.divide(norm(doc)));
         }
     }
+    
+    /**
+     * Find the earliest document in the cluster. Sort documents by date and
+     * return doc id with earliest date.
+     *
+     * @param dateIds The dates by document indices
+     * @param cluster The cluster of documents
+     * @return The doc id of earliest date in cluster
+     */
+    public int earliestDoc(Map<Integer, Date> dateIds, TIntList cluster) {
+        SortedSet<Pair<Integer, Date>> sortedDates = new TreeSet<>((o1, o2) -> {
+            int cmp = o1.getValue().compareTo(o2.getValue());
+            if (cmp == 0) {
+                return o1.getKey().compareTo(o2.getKey());
+            }
+            return cmp;
+        });
 
+        for (int i = 0; i < cluster.size(); i++) {
+            sortedDates.add(new Pair<>(cluster.get(i), dateIds.get(cluster.get(i))));
+        }
+        
+        System.out.printf("Earliest document: %s, date: %s\n", sortedDates.first().getKey(), sortedDates.first().getValue());
+        return sortedDates.first().getKey();
+   }
 }
