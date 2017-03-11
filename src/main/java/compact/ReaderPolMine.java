@@ -1,6 +1,5 @@
 package compact;
 
-import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,6 +33,8 @@ public class ReaderPolMine implements Reader {
     
     private static List<String> debateIds;
     
+    private static String debateId;
+    
     public ReaderPolMine(Layer layer) {
         this.layer = layer;
         debateMetadata = new HashMap();
@@ -56,13 +57,10 @@ public class ReaderPolMine implements Reader {
             SAXParser saxParser = parserFactory.newSAXParser();
             XMLHandler xmlHandler = new XMLHandler();
             
-            String debateID = xmlFile.getName();
-            if (debateID.endsWith(".xml")){
-                  System.out.println(String.format("Parsing file %s ...", debateID));
+            debateId = xmlFile.getName();
+            if (debateId.endsWith(".xml")){
+                  System.out.println(String.format("Parsing file %s ...", debateId));
                   saxParser.parse(xmlFile, xmlHandler);
-                  debateIds.add(debateID);
-                  debateContent.add(xmlHandler.debate());
-                  debateMetadata.putIfAbsent(debateID, xmlHandler.metadata());
             }
             
         } catch (ParserConfigurationException | SAXException | IOException e) {
@@ -85,11 +83,12 @@ public class ReaderPolMine implements Reader {
         return debateMetadata;
     }
     
-
     private class XMLHandler extends DefaultHandler {
     
         private Map<String, Integer> content;
-        private List<String> metadata;
+        private final List<String> metadata;
+        private String date;
+        private int sectionId;
 
         private boolean inDate;
         private boolean inToken;
@@ -100,6 +99,8 @@ public class ReaderPolMine implements Reader {
             this.stopwords = Stopwords.stopwords();
             content = new HashMap();
             metadata = new ArrayList<String>() {{add(""); add(""); add("");}};
+            date = "";
+            sectionId = 1;
             inDate = false;
             inToken = false;
         }
@@ -143,11 +144,9 @@ public class ReaderPolMine implements Reader {
                 }
             }
             if (inDate) {
-                String day = new String(ch, start, length).trim(); //1996-02-08
-                int l = day.length();
+                date = new String(ch, start, length).trim(); //1996-02-08
                 // Convert to same format as taz article dates: 08.02.1996
-                day = day.substring(l-2)+"."+day.substring(l-5, l-3)+"."+day.substring(0,l-6);
-                metadata.set(0, day);
+                date = date.substring(8)+"."+date.substring(5, 7)+"."+date.substring(0,4);
             }
         }
 
@@ -158,9 +157,10 @@ public class ReaderPolMine implements Reader {
                     inToken = true;
                     break;
                 case "body":
-                    content = new HashMap();
                     break;
                 case "speaker":
+                    content = new HashMap();
+                    metadata.set(0, date);
                     metadata.set(1, attrs.getValue("name"));
                     metadata.set(2, attrs.getValue("party"));
                     break;
@@ -177,6 +177,12 @@ public class ReaderPolMine implements Reader {
                     inToken = false;
                     break;
                 case "body":
+                    break;
+                case "speaker":
+                    debateIds.add(debateId+"_"+sectionId);
+                    debateContent.add(content);
+                    debateMetadata.putIfAbsent(debateId+"_"+sectionId, metadata);
+                    sectionId++;
                     break;
                 case "date":
                     inDate = false;
