@@ -1,5 +1,6 @@
 package compact;
 
+import com.google.common.collect.BiMap;
 import gnu.trove.list.TIntList;
 import gnu.trove.set.TIntSet;
 import org.la4j.Vector;
@@ -14,7 +15,7 @@ import java.util.Random;
  * @author Patricia Fischer
  */
 public class main {
-    private static final int NUM_OF_CLUSTERS = 3000;
+    private static final int NUM_OF_CLUSTERS = 200;//3000;
 
     public static void main(String[] args) throws IOException {
         
@@ -43,6 +44,9 @@ public class main {
         Vocabulary vocabulary = mb.buildVocabulary(corpus, directory);
         TermDocumentMatrix tdm = mb.buildMatrix(corpus, directory, vocabulary);
 
+        // Mapping from doc ID to doc name
+        BiMap<Integer, String> documentIndicesInverted = vocabulary.documentIndices().inverse();
+        
         System.out.println("_________________________");
         System.out.println("Retrieve k-means clusters");
         System.out.println("_________________________");
@@ -52,27 +56,43 @@ public class main {
         List<TIntList> clusters = kmc.clusters(centroids);
         for (TIntList cluster : clusters) {
             TIntSet sharedTerms = tdm.sharedTerms(cluster);
+            if (cluster.isEmpty()) {
+                System.out.println("Empty cluster");
+            }
+            else {
+                // Earliest doc in cluster
+                System.out.println(documentIndicesInverted.get(kmc.earliestDoc(vocabulary.documentDates(), cluster)));
 
-            System.out.println(cluster);
-            for (Integer c : cluster.toArray()) {
-                tdm.nMostRelevantTerms(tdm.counts().getRow(c).toSparseVector(), 10, vocabulary.tokenIndices(), sharedTerms);
+                System.out.println(cluster);
+                for (Integer c : cluster.toArray()) {
+                    tdm.nMostRelevantTerms(tdm.counts().getRow(c).toSparseVector(), 10, vocabulary.tokenIndices(), sharedTerms);
+                }
             }
             System.out.println();
         }
         
         System.out.println("____________________");
-        System.out.println("Find best clustering");
+        System.out.println("Best clustering");
         System.out.println("____________________");
         List<TIntList> bestClusters = kmc.nClusters(3);
         for (TIntList cluster : bestClusters) {
-            TIntSet sharedTerms = tdm.sharedTerms(cluster);
+            
+            if (cluster.isEmpty()) {
+                System.out.println("Empty cluster");
+            }
+            else {
+                // Earliest doc in cluster
+                System.out.println(documentIndicesInverted.get(kmc.earliestDoc(vocabulary.documentDates(), cluster)));
 
-            System.out.println(cluster);
-            for (Integer c : cluster.toArray()) {
-                tdm.nMostRelevantTerms(tdm.counts().getRow(c).toSparseVector(), 10, vocabulary.tokenIndices(), sharedTerms);
+                TIntSet sharedTerms = tdm.sharedTerms(cluster);
+                System.out.println(cluster);
+                for (Integer c : cluster.toArray()) {
+                    tdm.nMostRelevantTerms(tdm.counts().getRow(c).toSparseVector(), 10, vocabulary.tokenIndices(), sharedTerms);
+                }
             }
             System.out.println();
         }
+        
     }
     
 }
