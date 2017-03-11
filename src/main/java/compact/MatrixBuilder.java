@@ -1,10 +1,10 @@
 package compact;
 
+import static compact.ReaderUtils.*;
 import gnu.trove.list.TIntList;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -25,7 +25,7 @@ public class MatrixBuilder {
 
     public Vocabulary buildVocabulary(String corpus, File directory) throws IOException {
         String fileExtension = getExtension(corpus);
-        Reader read = getReader(corpus);
+        Reader read = getReader(corpus, LAYER);
         List<File> files = getFiles(corpus, directory, fileExtension);
 
 
@@ -39,59 +39,13 @@ public class MatrixBuilder {
             for (int i = 0; i < read.getSectionIDs().size(); i++) {
                 vocabulary.processSection(read.getSectionIDs().get(i), read.getContent().get(i));
             }
-            System.out.println(++filesDone);
+            System.err.println(++filesDone);
         }
+        vocabulary.extractDocumentDates(read.getMetadata());
 
         return vocabulary;
     }
-
-    private List<File> getFiles(String corpus, File directory, String fileExtension) {
-        List<File> files = new ArrayList();
-        if (corpus.equalsIgnoreCase("taz")) {
-            for (File dir : directory.listFiles()) {
-                File subDir = new File(dir.getAbsolutePath());
-                for (File file : subDir.listFiles()) {
-                    if (file.isFile() && file.getName().endsWith(fileExtension)) {
-                        files.add(file);
-                    }
-                }
-            }
-        } else if (corpus.equalsIgnoreCase("PolMine")) {
-            for (File file : directory.listFiles()) {
-                if (file.isFile() && file.getName().endsWith(fileExtension)) {
-                    files.add(file);
-                }
-            }
-        } else {
-            System.err.println("Provide a corpus name, choose between PolMine and taz.");
-        }
-        return files;
-    }
-
-    private Reader getReader(String corpus) throws IOException {
-        Reader read = new ReaderPolMine(LAYER);
-        if (corpus.equalsIgnoreCase("taz")) {
-            read = new ReaderTaz(LAYER);
-        } else if (corpus.equalsIgnoreCase("PolMine")) {
-            read = new ReaderPolMine(LAYER);
-        } else {
-            System.err.println("Provide a corpus name, choose between PolMine and taz.");
-        }
-        return read;
-    }
-
-    private String getExtension(String corpus) {
-        String fileExtension = "";
-        if (corpus.equalsIgnoreCase("taz")) {
-            fileExtension = ".conll.gz";
-        } else if (corpus.equalsIgnoreCase("PolMine")) {
-            fileExtension = ".xml";
-        } else {
-            throw new IllegalArgumentException("Unknown corpus type:" + corpus);
-        }
-        return fileExtension;
-    }
-
+    
     /**
      * @param corpus     The name of the corpus, either PolMine or taz
      * @param directory  The directory of the data collection
@@ -105,7 +59,7 @@ public class MatrixBuilder {
         //Locale.setDefault(Locale.Category.FORMAT, Locale.ENGLISH);
 
         String fileExtension = getExtension(corpus);
-        Reader read = getReader(corpus);
+        Reader read = getReader(corpus, LAYER);
         List<File> files = getFiles(corpus, directory, fileExtension);
 
         Set<Integer> mostFrequent = mostFrequentTokens(vocabulary.tokenCounts(), STOPWORD_LIST_SIZE);
