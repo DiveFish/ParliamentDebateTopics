@@ -5,6 +5,11 @@ import com.google.common.collect.HashBiMap;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,6 +36,8 @@ public class Vocabulary {
     
     private final TIntList documentFrequencies; //stores for each term the documents in which it occurs
     
+    private final Map<Integer, Date> dateIds;
+    
     /**
      * Vocabulary can be created on lemmas or tokens.
      * Layer LEMMA will lemmatize the input text and process word types.
@@ -44,6 +51,7 @@ public class Vocabulary {
         tokenIndices = HashBiMap.create();
         tokenCounts = new TIntArrayList();
         documentFrequencies = new TIntArrayList();
+        dateIds = new HashMap();
     }
     
     // processFile()
@@ -134,4 +142,47 @@ public class Vocabulary {
     public TIntList documentFrequencies() {
         return documentFrequencies;
     }   
+    
+    /**
+     *
+     * @return The dates by document indices
+     */
+    public Map<Integer, Date> documentDates() {
+        return dateIds;
+    }
+    
+    
+    /**
+     * Map each date to the document index. Original format is "file ID - doc idx"
+     * and "file ID - date string", should be "doc idx - date"
+     * 
+     * @param metadata The metadata containing the file's date
+     */
+   public void extractDocumentDates(Map<String, List<String>> metadata) {
+       
+       BiMap<Integer, String> docsByIdx = documentIndices.inverse();
+       
+       for (int i = 0; i < docsByIdx.size(); i++) {
+           dateIds.putIfAbsent(i, stringToDate(metadata.get(docsByIdx.get(i)).get(0)));  // get date from metadata
+       }
+   }
+   
+   /**
+    * Convert string to date.
+    * 
+    * @param dateString The string to be converted
+    * @return The date
+    */
+   private Date stringToDate(String dateString) {
+        SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yy");
+        Date date = new Date();
+        try {
+            date = formatter.parse(dateString);
+            return date;
+
+        } catch (ParseException e) {
+            System.err.println("Cannot parse date");
+        }
+        return date;
+   }
 }
