@@ -160,7 +160,7 @@ public class KMeansClustering {
 
             for (int idx = 0; idx < adjustedCentroids.size(); idx++) {
                 // Compute centroid and normalize to unit vector.
-                SparseVector unnormalizedCentroid = (SparseVector) adjustedCentroids.get(idx).divide(numOfClusterElements[idx]);
+                SparseVector unnormalizedCentroid = adjustedCentroids.get(idx).divide(numOfClusterElements[idx]).toSparseVector();
                 adjustedCentroids.set(idx, unnormalizedCentroid.divide(norm(unnormalizedCentroid)));
             }
 
@@ -179,7 +179,7 @@ public class KMeansClustering {
 
     private void normalizeDocumentVectors(Matrix documentVectors) {
         for (int i = 0; i < documentVectors.rows(); i++) {
-            SparseVector doc = (SparseVector) documentVectors.getRow(i);
+            SparseVector doc = documentVectors.getRow(i).toSparseVector();
             documentVectors.setRow(i, doc.divide(norm(doc)));
         }
     }
