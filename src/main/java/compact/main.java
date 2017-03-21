@@ -47,6 +47,8 @@ public class main {
         // Mapping from doc ID to doc name
         BiMap<Integer, String> documentIndicesInverted = vocabulary.documentIndices().inverse();
         
+        //tdm.svd();
+        
         System.out.println("_________________________");
         System.out.println("Retrieve k-means clusters");
         System.out.println("_________________________");
@@ -55,7 +57,8 @@ public class main {
         
         List<TIntList> clusters = kmc.clusters(centroids);
         for (TIntList cluster : clusters) {
-            TIntSet sharedTerms = tdm.sharedTerms(cluster);
+            //TIntSet sharedTerms = tdm.sharedTerms(cluster);
+            TIntSet sharedTerms = tdm.partiallySharedTerms(cluster, 1/3);
             if (cluster.isEmpty()) {
                 System.out.println("Empty cluster");
             }
@@ -84,7 +87,8 @@ public class main {
                 // Earliest doc in cluster
                 System.out.println(documentIndicesInverted.get(kmc.earliestDoc(vocabulary.documentDates(), cluster)));
 
-                TIntSet sharedTerms = tdm.sharedTerms(cluster);
+                //TIntSet sharedTerms = tdm.sharedTerms(cluster);
+                TIntSet sharedTerms = tdm.partiallySharedTerms(cluster, 1/3);
                 System.out.println(cluster);
                 for (Integer c : cluster.toArray()) {
                     tdm.nMostRelevantTerms(tdm.counts().getRow(c).toSparseVector(), 10, vocabulary.tokenIndices(), sharedTerms);
