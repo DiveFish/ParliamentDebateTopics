@@ -15,6 +15,7 @@ import org.la4j.matrix.SparseMatrix;
 import org.la4j.matrix.sparse.CRSMatrix;
 import org.la4j.iterator.MatrixIterator;
 import org.la4j.Vector;
+import org.la4j.decomposition.SingularValueDecompositor;
 import org.la4j.iterator.VectorIterator;
 import org.la4j.vector.SparseVector;
 
@@ -53,6 +54,14 @@ public class TermDocumentMatrix {
      */
     public void tfIdf(TIntList documentFrequencies) {
         countsToTfIdf(documentFrequencies);
+    }
+    
+    /**
+     * Decompose matrix.
+     */
+    public void svd() {
+        SingularValueDecompositor svd = new SingularValueDecompositor(counts);
+        counts = svd.decompose()[0].toSparseMatrix();
     }
 
     /**
@@ -114,7 +123,7 @@ public class TermDocumentMatrix {
             return -cmp;
         });
 
-        VectorIterator vIter = ((SparseVector) document).nonZeroIterator();
+        VectorIterator vIter = (document.toSparseVector()).nonZeroIterator();
         while (vIter.hasNext()) {
             double tfidf = vIter.next();
             if (retain.contains(vIter.index())) {
@@ -164,7 +173,7 @@ public class TermDocumentMatrix {
         TIntSet shared = null;
 
         for (int i = 0; i < cluster.size(); i++) {
-            SparseVector row = (SparseVector) counts.getRow(cluster.get(i));
+            SparseVector row = counts.getRow(cluster.get(i)).toSparseVector();
             TIntSet docTermSet = new TIntHashSet();
             VectorIterator termIter = row.nonZeroIterator();
             while (termIter.hasNext()) {
@@ -180,5 +189,36 @@ public class TermDocumentMatrix {
         }
 
         return shared;
+    }
+    
+    public TIntSet partiallySharedTerms(TIntList cluster,double ratio) {
+        TIntSet partShared = new TIntHashSet();        
+        TIntList terms = new TIntArrayList();
+        TIntList freqs = new TIntArrayList();
+        
+        for (int i = 0; i < cluster.size(); i++) {
+            SparseVector row = counts.getRow(cluster.get(i)).toSparseVector();
+            VectorIterator termIter = row.nonZeroIterator();
+            while (termIter.hasNext()) {
+                termIter.next();
+                int val = termIter.index();
+                int idx = terms.binarySearch(val);
+                if (idx < 0) {
+                    terms.add(val);
+                    freqs.add(1);
+                }
+                else {
+                    freqs.set(idx, freqs.get(idx)+1);
+                }
+            }
+        }
+        
+        for (int j = 0; j < terms.size(); j++) {
+            if (freqs.get(j) > cluster.size()*ratio) {
+                partShared.add(terms.get(j));
+            }
+        }
+        
+        return partShared;
     }
 }
