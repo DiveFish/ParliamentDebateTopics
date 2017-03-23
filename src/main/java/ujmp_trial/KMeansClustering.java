@@ -212,6 +212,7 @@ public class KMeansClustering {
         double b2Sum = 0;
 
         // change to nonZeroCoordinates/availableCoordinates
+
         for (long[] c : m1.allCoordinates()) {
             double a = m1.getAsDouble(c);
             double b = m2.getAsDouble(c);
