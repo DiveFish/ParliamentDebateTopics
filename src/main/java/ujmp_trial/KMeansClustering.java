@@ -82,7 +82,8 @@ public class KMeansClustering {
 
             for (int i = 0; i < centroidSize; i++) {
                 BaseDoubleMatrix sgCentroid = centroids.selectRows(Calculation.Ret.NEW, i).toDoubleMatrix();
-                double similarity = sgCentroid.cosineSimilarityTo(documentVectors.selectRows(Calculation.Ret.NEW, row), true);
+                //double similarity = sgCentroid.cosineSimilarityTo(documentVectors.selectRows(Calculation.Ret.NEW, row), true);
+                double similarity = getCosineSimilarity(sgCentroid, documentVectors.selectRows(Calculation.Ret.NEW, row), true);
                 if (similarity > maxSimilarity) {
                     maxSimilarity = similarity;
                     closesCentroidIdx = i; // index of closest centroid
@@ -197,7 +198,6 @@ public class KMeansClustering {
        return sortedDates.first().getKey();
     }
     
-    
     /**
      * UJMP CosineSimilarity method. In original called "getCosineSimilartiy" (typo)
      * @param m1 First matrix
@@ -207,12 +207,66 @@ public class KMeansClustering {
      */
     private static double getCosineSimilarity(Matrix m1, Matrix m2, boolean ignoreNaN) {
         VerifyUtil.verifySameSize(m1, m2);
+
         double aiSum = 0;
         double a2Sum = 0;
         double b2Sum = 0;
 
-        // change to nonZeroCoordinates/availableCoordinates
+        Iterator<long[]> it1 = m1.selectRows(Calculation.Ret.ORIG, 0).divide(m1.norm2()).nonZeroCoordinates().iterator();
+        Iterator<long[]> it2 = m2.selectRows(Calculation.Ret.ORIG, 0).divide(m2.norm2()).nonZeroCoordinates().iterator();
 
+        long col1 = it1.next()[1];
+        long col2 = it2.next()[1];
+
+        boolean endOfMatrix1 = false;
+        boolean endOfMatrix2 = false;
+
+        while (!(endOfMatrix1 && endOfMatrix2)) {
+
+            //Non-zero value at same coordinates
+            if (col1 == col2) {
+                double a = m1.getAsDouble(0, col1);
+                double b = m2.getAsDouble(0, col2);
+                aiSum += a * b;
+                a2Sum += a * a;
+                b2Sum += b * b;
+                if (! (it1.hasNext() && it2.hasNext())) {
+                    break;
+                }
+                else if (it1.hasNext()) {
+                    col1 = it1.next()[1];
+                    endOfMatrix2 = true;
+                }
+                else if (it2.hasNext()) {
+                    col2 = it2.next()[1];
+                    endOfMatrix1 = true;
+                }
+            }
+            // Column in m1 lower than in m2 -> move m1
+            else if (col1 < col2) {
+                double a = m1.getAsDouble(0, col1);
+                a2Sum += a * a;
+                if (it1.hasNext()) {
+                    col1 = it1.next()[1];
+                }
+                else {
+                    endOfMatrix1 = true;
+                }
+            }
+            // Column in m2 lower than in m1 -> move m2
+            else if (col1 > col2) {
+                double b = m2.getAsDouble(0, col2);
+                b2Sum += b * b;
+                if (it2.hasNext()) {
+                    col2 = it2.next()[1];
+                }
+                else {
+                    endOfMatrix2 = true;
+                }
+            }
+        }
+
+        /*
         for (long[] c : m1.allCoordinates()) {
             double a = m1.getAsDouble(c);
             double b = m2.getAsDouble(c);
@@ -228,6 +282,7 @@ public class KMeansClustering {
                 b2Sum += b * b;
             }
         }
+        */
         return aiSum / (Math.sqrt(a2Sum) * Math.sqrt(b2Sum));
     }
 }
