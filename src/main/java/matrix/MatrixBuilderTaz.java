@@ -56,7 +56,7 @@ public class MatrixBuilderTaz extends MatrixBuilder {
             if (file.isFile() && file.getName().endsWith(CONLL_EXTENSION)) {
                 // Extract article content
                 taz.processFile(file);
-                taz.deleteStopwords(taz.getArticleContent());
+                //taz.deleteStopwords(taz.getArticleContent());
                 vocabulary.processFile(taz.getArticleID(), taz.getArticleContent());
             }
             System.out.println(++filesDone);
