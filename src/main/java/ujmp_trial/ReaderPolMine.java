@@ -22,17 +22,17 @@ import org.xml.sax.helpers.DefaultHandler;
  * @author Daniël de Kok and Patricia Fischer
  */
 public class ReaderPolMine implements Reader {
-    
+
     private final Layer layer;
 
     private final Map<String, List<String>> debateMetadata;  // file ID <-> date - speaker - party
-    
+
     private final SAXParserFactory parserFactory;
-    
+
     private static List<Map<String, Integer>> debateContent;
-    
+
     private static List<String> debateIds;
-    
+
     public ReaderPolMine(Layer layer) {
         this.layer = layer;
         debateMetadata = new HashMap();
@@ -54,7 +54,7 @@ public class ReaderPolMine implements Reader {
         try {
             SAXParser saxParser = parserFactory.newSAXParser();
             XMLHandler xmlHandler = new XMLHandler();
-            
+
             String debateID = xmlFile.getName();
             if (debateID.endsWith(".xml")){
                   System.out.println(String.format("Parsing file %s ...", debateID));
@@ -63,36 +63,36 @@ public class ReaderPolMine implements Reader {
                   debateContent.add(xmlHandler.debate());
                   debateMetadata.putIfAbsent(debateID, xmlHandler.metadata());
             }
-            
+
         } catch (ParserConfigurationException | SAXException | IOException e) {
             throw new IOException(e);
         }
     }
-    
+
     @Override
     public List<Map<String, Integer>> getContent() {
         return debateContent;
     }
-    
+
     @Override
     public List<String> getSectionIDs() {
         return debateIds;
     }
-    
+
     @Override
     public Map<String, List<String>> getMetadata() {
         return debateMetadata;
     }
-    
+
 
     private class XMLHandler extends DefaultHandler {
-    
+
         private Map<String, Integer> content;
         private List<String> metadata;
 
         private boolean inDate;
         private boolean inToken;
-        
+
         private final Set<String> stopwords;
 
         public XMLHandler() throws IOException {
@@ -106,7 +106,7 @@ public class ReaderPolMine implements Reader {
         public Map<String, Integer> debate() {
             return content;
         }
-        
+
         public List<String> metadata() {
             return metadata;
         }
@@ -116,22 +116,22 @@ public class ReaderPolMine implements Reader {
             if (inToken) {
                 // Remove all leading and trailing punctuation?
                 String word = new String(ch, start, length).trim();//.replaceFirst("^[^a-zA-Z]+", "").replaceAll("[^a-zA-Z]+$", "");
-               /*
-                StringBuilder, iterate over array character by character and check if its a character
-                function which tells whether sth is considered unicode <-> punctuation
+
+                /*
+                    StringBuilder, iterate over array character by character and check if it's a character
+                    function which tells whether sth is considered unicode <-> punctuation
                 */
-                
                 StringBuilder sb = new StringBuilder();
-                for(char c : word.toCharArray()) { 
-                    int cInt = (int)c;
+                for(char c : word.toCharArray()) {
+                    int cInt = (int) c;
                     // numbers; characters and Umlaute (upper +  lower case); "ß"; "/" (as in "CDU/CSU); "-" (hyphen)
                     if (cInt == (38) || cInt == 45 || cInt == 128 || cInt == 196 || cInt == 214 || cInt == 220 || cInt == 223 || cInt == 228 || cInt == 246 || cInt == 252 || (cInt < 58 && cInt > 46) || (cInt < 91 && cInt > 64) || (cInt < 123 && cInt > 96)) {
                         sb.append(c);
-                    }                    
+                    }
                 }
-                
+
                 word = sb.toString();
-                
+
                 if (!stopwords.contains(word.toLowerCase()) && (word.length() > 0)) {
                     if (!content.containsKey(word)) {
                         content.putIfAbsent(word, 1);

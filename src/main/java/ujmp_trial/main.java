@@ -9,14 +9,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 import org.ujmp.core.calculation.Calculation;
-import org.ujmp.core.doublematrix.SparseDoubleMatrix;
+import org.ujmp.core.doublematrix.SparseDoubleMatrix2D;
 
 /**
  *
  * @author Patricia Fischer
  */
 public class main {
-    private static final int NUM_OF_CLUSTERS = 500;//3000;
+    private static final int NUM_OF_CLUSTERS = 5;//3000;
 
     public static void main(String[] args) throws IOException {
         System.out.printf("Running %s\n", main.class);
@@ -52,7 +52,7 @@ public class main {
         BiMap<Integer, String> documentIndicesInverted = vocabulary.documentIndices().inverse();
 
         KMeansClustering kmc = new KMeansClustering(NUM_OF_CLUSTERS, tdm.counts(), new Random());
-        SparseDoubleMatrix centroids = kmc.centroids();
+        SparseDoubleMatrix2D centroids = kmc.centroids();
         
         List<TIntList> clusters = kmc.clusters(centroids);
         for (TIntList cluster : clusters) {
@@ -65,9 +65,10 @@ public class main {
                 System.out.println(documentIndicesInverted.get(kmc.earliestDoc(vocabulary.documentDates(), cluster)));
 
                 TIntSet sharedTerms = tdm.sharedTerms(cluster);
+                //TIntSet sharedTerms = tdm.partiallySharedTerms(cluster, 1/2);
                 System.out.println(cluster);
                 for (Integer c : cluster.toArray()) {
-                    tdm.nMostRelevantTerms((SparseDoubleMatrix) tdm.counts().selectRows(Calculation.Ret.NEW, c).toDoubleMatrix(), 10, vocabulary.tokenIndices(), sharedTerms);
+                    tdm.nMostRelevantTerms((SparseDoubleMatrix2D) tdm.counts().selectRows(Calculation.Ret.NEW, c), 10, vocabulary.tokenIndices(), sharedTerms);
                 }
                 System.out.println();
             }
@@ -89,15 +90,23 @@ public class main {
                 // Earliest doc in cluster
                 System.out.println(documentIndicesInverted.get(kmc.earliestDoc(vocabulary.documentDates(), cluster)));
 
-                TIntSet sharedTerms = tdm.sharedTerms(cluster);
+                //TIntSet sharedTerms = tdm.sharedTerms(cluster);
+                TIntSet sharedTerms = tdm.partiallySharedTerms(cluster, 1/2);
                 System.out.println(cluster);
                 for (Integer c : cluster.toArray()) {
-                    tdm.nMostRelevantTerms((SparseDoubleMatrix) tdm.counts().selectRows(Calculation.Ret.NEW, c), 10, vocabulary.tokenIndices(), sharedTerms);
+                    tdm.nMostRelevantTerms((SparseDoubleMatrix2D) tdm.counts().selectRows(Calculation.Ret.NEW, c), 10, vocabulary.tokenIndices(), sharedTerms);
                 }
             }
             System.out.println();
         }
-        
+        StorageInformation info = new StorageInformation(centroids, vocabulary.documentIndices(), vocabulary.documentDates());
+        Storage store = new Storage();
+        store.setStorageInfo(info);
+        store.serialize();
+        store.deserialize();
+        System.out.println("Rows/docs: "+info.getCentroids().getSize()[0]+", columns/words: "+info.getCentroids().getSize()[1]);
+        System.out.println(info.getDocumentDates().get(0));
+        System.out.println(info.getDocumentIndices().inverse().get(0));
     }
     
 }

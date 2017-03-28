@@ -12,8 +12,8 @@ import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import org.apache.commons.math3.util.Pair;
 import org.ujmp.core.Matrix;
-import org.ujmp.core.doublematrix.SparseDoubleMatrix;
 import org.ujmp.core.calculation.Calculation;
+import org.ujmp.core.doublematrix.SparseDoubleMatrix2D;
 
 /**
  * Create a term-document and tf.idf matrix. All files and the vocabulary
@@ -29,13 +29,14 @@ public class TermDocumentMatrix {
 
     private final BiMap<String, Integer> tokenIndices;
 
-    private static SparseDoubleMatrix counts;
+    private static SparseDoubleMatrix2D counts;
 
     public TermDocumentMatrix(BiMap<String, Integer> documentIndices,
                               BiMap<String, Integer> tokenIndices, Set<Integer> mostFrequent) {
         this.documentIndices = documentIndices;
         this.tokenIndices = tokenIndices;
-        counts = SparseDoubleMatrix.Factory.zeros(documentIndices.size(), tokenIndices.size());
+        //counts = new SparseDoubleMatrix2D(documentIndices.size(), tokenIndices.size());
+        counts = SparseDoubleMatrix2D.Factory.zeros(documentIndices.size(), tokenIndices.size());
     }
 
     
@@ -43,13 +44,13 @@ public class TermDocumentMatrix {
      * Not used because of heap space exception.
      */
     public void svd() {
-        counts = (SparseDoubleMatrix) counts.svd()[0].toDoubleMatrix();
+        counts = (SparseDoubleMatrix2D) counts.svd()[0];
     }
     
     /**
      * @return The term-frequency matrix
      */
-    public SparseDoubleMatrix counts() {
+    public SparseDoubleMatrix2D counts() {
         return counts;
     }
 
@@ -70,10 +71,11 @@ public class TermDocumentMatrix {
             int col = (int) l[1];
             int docFreq = documentFrequencies.get(col);
             if (docFreq > 0 && val > 0) {
-                counts.setAsDouble(val * Math.log((double) numOfDocuments / (double) docFreq), row, col);
+                counts.setAsDouble( val * Math.log((double) numOfDocuments / (double) docFreq), row, col);
             }
         }
-        counts = (SparseDoubleMatrix) counts.normalize(Calculation.Ret.NEW, 1).toDoubleMatrix();
+        // Very slow too :(
+        //counts = (SparseDoubleMatrix2D) counts.normalize(Calculation.Ret.NEW, 1).toDoubleMatrix();
     }
 
     /**
@@ -102,7 +104,7 @@ public class TermDocumentMatrix {
      * @param retain   Terms to retain
      * @return The term indices
      */
-    private TIntList nHighestTfIdfs(SparseDoubleMatrix document, Integer n, TIntSet retain) {
+    private TIntList nHighestTfIdfs(SparseDoubleMatrix2D document, Integer n, TIntSet retain) {
         SortedSet<Pair<Integer, Double>> sortedTerms = new TreeSet<>((o1, o2) -> {
             int cmp = o1.getValue().compareTo(o2.getValue());
             if (cmp == 0) {
@@ -136,7 +138,7 @@ public class TermDocumentMatrix {
      * @param sharedTerms Token indices of terms shared by docs in a cluster
      * @return The most relevant terms
      */
-    public List<String> nMostRelevantTerms(SparseDoubleMatrix document, Integer n, BiMap<String, Integer> tokenIndices, TIntSet sharedTerms) {
+    public List<String> nMostRelevantTerms(SparseDoubleMatrix2D document, Integer n, BiMap<String, Integer> tokenIndices, TIntSet sharedTerms) {
         TIntList idxs = nHighestTfIdfs(document, n, sharedTerms);
         List<String> terms = new ArrayList<>();
 
@@ -161,12 +163,10 @@ public class TermDocumentMatrix {
         TIntSet shared = null;
         
         for (int i = 0; i < cluster.size(); i++) {
-            Matrix row = counts.selectRows(Calculation.Ret.NEW, cluster.get(i));
+            Iterator<long[]> rowIter = counts.selectRows(Calculation.Ret.NEW, cluster.get(i)).nonZeroCoordinates().iterator();
             TIntSet docTermSet = new TIntHashSet();
-            for (int c = 0; c < row.getColumnCount(); c++) {
-                if (row.getAsDouble(0, c)!=0) {
-                    docTermSet.add(c);
-                }
+            while(rowIter.hasNext()) {
+                docTermSet.add((int) rowIter.next()[1]);
             }
 
             if (i == 0) {
@@ -177,5 +177,41 @@ public class TermDocumentMatrix {
         }
 
         return shared;
+    }
+
+    /**
+     *
+     * @param cluster
+     * @param ratio
+     * @return
+     */
+    public TIntSet partiallySharedTerms(TIntList cluster, double ratio) {
+        TIntSet partShared = new TIntHashSet();
+        TIntList terms = new TIntArrayList(); //list of terms occurring in this cluster
+        TIntList freqs = new TIntArrayList(); //the terms' frequencies (used as filter)
+
+        for (int i = 0; i < cluster.size(); i++) {
+            Iterator<long[]> rowIter = counts.selectRows(Calculation.Ret.NEW, cluster.get(i)).nonZeroCoordinates().iterator();
+            while (rowIter.hasNext()) {
+                long[] coords = rowIter.next();
+                int termId = (int) coords[1];
+                int idx = terms.binarySearch(termId);
+                if (idx < 0) {
+                    terms.add(termId);
+                    freqs.add(1);
+                }
+                else {
+                    freqs.set(idx, freqs.get(idx)+1);
+                }
+            }
+        }
+
+        for (int j = 0; j < terms.size(); j++) {
+            if (freqs.get(j) > cluster.size()*ratio) {
+                partShared.add(terms.get(j));
+            }
+        }
+
+        return partShared;
     }
 }

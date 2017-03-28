@@ -9,8 +9,7 @@ import org.apache.commons.math3.util.Pair;
 
 import org.ujmp.core.Matrix;
 import org.ujmp.core.calculation.Calculation;
-import org.ujmp.core.doublematrix.BaseDoubleMatrix;
-import org.ujmp.core.doublematrix.SparseDoubleMatrix;
+import org.ujmp.core.doublematrix.SparseDoubleMatrix2D;
 import org.ujmp.core.util.MathUtil;
 import org.ujmp.core.util.VerifyUtil;
 
@@ -23,14 +22,14 @@ public class KMeansClustering {
 
     private final int numOfClusters;
 
-    private final SparseDoubleMatrix documentVectors;
+    private final SparseDoubleMatrix2D documentVectors;
 
     private final Random random;
     
     private static double cosine;
 
 
-    public KMeansClustering(int numOfClusters, SparseDoubleMatrix documentVectors, Random random) {
+    public KMeansClustering(int numOfClusters, SparseDoubleMatrix2D documentVectors, Random random) {
         this.numOfClusters = numOfClusters;
         this.documentVectors = documentVectors;
         this.random = random;
@@ -68,7 +67,7 @@ public class KMeansClustering {
      * @param centroids The list of centroid vectors
      * @return The clusters as list of vector idxs
      */
-    public List<TIntList> clusters(BaseDoubleMatrix centroids) {
+    public List<TIntList> clusters(SparseDoubleMatrix2D centroids) {
 
         int centroidSize = (int) centroids.getRowCount();
         List<TIntList> clusters = new ArrayList(centroidSize);
@@ -81,7 +80,7 @@ public class KMeansClustering {
             int closesCentroidIdx = 0;
 
             for (int i = 0; i < centroidSize; i++) {
-                BaseDoubleMatrix sgCentroid = centroids.selectRows(Calculation.Ret.NEW, i).toDoubleMatrix();
+                SparseDoubleMatrix2D sgCentroid = (SparseDoubleMatrix2D) centroids.selectRows(Calculation.Ret.NEW, i);
                 //double similarity = sgCentroid.cosineSimilarityTo(documentVectors.selectRows(Calculation.Ret.NEW, row), true);
                 double similarity = getCosineSimilarity(sgCentroid, documentVectors.selectRows(Calculation.Ret.NEW, row), true);
                 if (similarity > maxSimilarity) {
@@ -105,7 +104,7 @@ public class KMeansClustering {
      * @throws java.io.IOException
      */
 
-    public SparseDoubleMatrix centroids() throws IOException {
+    public SparseDoubleMatrix2D centroids() throws IOException {
 
         if (documentVectors.getMaxValue() == 0) {
             throw new IOException("Trying to extract clusters from zero matrix");
@@ -124,7 +123,7 @@ public class KMeansClustering {
             seedDocs.add((long) this.random.nextInt(numOfDocs));
         }
 
-        SparseDoubleMatrix centroids = (SparseDoubleMatrix) documentVectors.selectRows(Calculation.Ret.NEW, seedDocs).toDoubleMatrix();
+        SparseDoubleMatrix2D centroids = (SparseDoubleMatrix2D) documentVectors.selectRows(Calculation.Ret.NEW, seedDocs);
 
         for (int iter = 0; iter < 1; iter++) { //TODO: change back to several iterations after testing
             double objective = 0;
@@ -144,7 +143,7 @@ public class KMeansClustering {
                 double maximum = -Double.MAX_VALUE;
                 int idx = -1;
                 for (int i = 0; i < centroids.getRowCount(); i++) {
-                    SparseDoubleMatrix centroid = (SparseDoubleMatrix) centroids.selectRows(Calculation.Ret.NEW, i).toDoubleMatrix();
+                    SparseDoubleMatrix2D centroid = (SparseDoubleMatrix2D) centroids.selectRows(Calculation.Ret.NEW, i);
                     
                     //double similarity = centroid.cosineSimilarityTo(documentVectors.selectRows(Calculation.Ret.NEW, row), true);
                     double similarity = getCosineSimilarity(centroid, documentVectors.selectRows(Calculation.Ret.NEW, row), true);
@@ -161,10 +160,10 @@ public class KMeansClustering {
 
             System.err.println("Recomputing centroids...");
             
-            centroids = SparseDoubleMatrix.Factory.zeros(0, vectorLength);
+            centroids = SparseDoubleMatrix2D.Factory.zeros(0, vectorLength);
 
             for (int idx = 0; idx < adjustedCentroids.size(); idx++) {
-                centroids = (SparseDoubleMatrix) centroids.appendVertically(Calculation.Ret.NEW, documentVectors.selectRows(Calculation.Ret.NEW, adjustedCentroids.get(idx)).sum(Calculation.Ret.NEW, 0, true).divide(numOfClusterElements[idx])).toDoubleMatrix();
+                centroids = (SparseDoubleMatrix2D) centroids.appendVertically(Calculation.Ret.NEW, documentVectors.selectRows(Calculation.Ret.NEW, adjustedCentroids.get(idx)).sum(Calculation.Ret.NEW, 0, true).divide(numOfClusterElements[idx]));
             }
 
             cosine = objective / numOfDocs;
@@ -173,7 +172,24 @@ public class KMeansClustering {
 
         return centroids;
     }
-    
+
+    private void normalizeMatrix(Matrix m) {
+        double length = 0;
+        int rowNum = 0;
+        for (long[] coords : m.nonZeroCoordinates()){
+            // Reset values and calculate norm on preceding row when moving to next row
+            if (coords[0] > rowNum) {
+                m.selectRows(Calculation.Ret.ORIG, rowNum).divide(Math.sqrt(length));
+                rowNum++;
+                length = 0;
+            }
+            double val = m.getAsDouble(coords);
+            length += (val*val);
+        }
+        //Matrix norm =  m.times(m).sum(Calculation.Ret.NEW, 1, true).sqrt(Calculation.Ret.NEW);
+        //m.divide(norm);
+    }
+
     /**
      * Find the earliest document in the cluster. Sort documents by date and
      * return doc id with earliest date.
@@ -194,8 +210,10 @@ public class KMeansClustering {
         for (int i = 0; i < cluster.size(); i++) {
             sortedDates.add(new Pair<>(cluster.get(i), dateIds.get(cluster.get(i))));
         }
-        System.out.printf("Document: %s, date: %s", sortedDates.first().getKey(), sortedDates.first().getValue());
-       return sortedDates.first().getKey();
+
+        System.out.printf("Earliest document: %s, date: %s\n", sortedDates.first().getKey(), sortedDates.first().getValue());
+
+        return sortedDates.first().getKey();
     }
     
     /**
@@ -212,18 +230,22 @@ public class KMeansClustering {
         double a2Sum = 0;
         double b2Sum = 0;
 
-        Iterator<long[]> it1 = m1.selectRows(Calculation.Ret.ORIG, 0).divide(m1.norm2()).nonZeroCoordinates().iterator();
-        Iterator<long[]> it2 = m2.selectRows(Calculation.Ret.ORIG, 0).divide(m2.norm2()).nonZeroCoordinates().iterator();
+        //Iterator<long[]> it1 = m1.selectRows(Calculation.Ret.ORIG, 0).divide(m1.norm2()).nonZeroCoordinates().iterator();
+        //Iterator<long[]> it2 = m2.selectRows(Calculation.Ret.ORIG, 0).divide(m2.norm2()).nonZeroCoordinates().iterator();
+        Iterator<long[]> it1 = m1.selectRows(Calculation.Ret.ORIG, 0).nonZeroCoordinates().iterator();
+        Iterator<long[]> it2 = m2.selectRows(Calculation.Ret.ORIG, 0).nonZeroCoordinates().iterator();
 
-        long col1 = it1.next()[1];
-        long col2 = it2.next()[1];
+        //Get norm
+
+        int col1 = (int) it1.next()[1];
+        int col2 = (int) it2.next()[1];
 
         boolean endOfMatrix1 = false;
         boolean endOfMatrix2 = false;
 
         while (!(endOfMatrix1 && endOfMatrix2)) {
 
-            //Non-zero value at same coordinates
+            //Non-zero value in same column
             if (col1 == col2) {
                 double a = m1.getAsDouble(0, col1);
                 double b = m2.getAsDouble(0, col2);
@@ -234,11 +256,11 @@ public class KMeansClustering {
                     break;
                 }
                 else if (it1.hasNext()) {
-                    col1 = it1.next()[1];
+                    col1 = (int) it1.next()[1];
                     endOfMatrix2 = true;
                 }
                 else if (it2.hasNext()) {
-                    col2 = it2.next()[1];
+                    col2 = (int) it2.next()[1];
                     endOfMatrix1 = true;
                 }
             }
@@ -247,7 +269,7 @@ public class KMeansClustering {
                 double a = m1.getAsDouble(0, col1);
                 a2Sum += a * a;
                 if (it1.hasNext()) {
-                    col1 = it1.next()[1];
+                    col1 = (int) it1.next()[1];
                 }
                 else {
                     endOfMatrix1 = true;
@@ -258,7 +280,7 @@ public class KMeansClustering {
                 double b = m2.getAsDouble(0, col2);
                 b2Sum += b * b;
                 if (it2.hasNext()) {
-                    col2 = it2.next()[1];
+                    col2 = (int) it2.next()[1];
                 }
                 else {
                     endOfMatrix2 = true;

@@ -8,14 +8,14 @@ public class Storage {
 
     private StorageInformation info;
 
-    public void serialize(StorageInformation info) {
+    public void serialize() {
         try {
             FileOutputStream fileOut = new FileOutputStream("/tmp/storageInfo.ser");
             ObjectOutputStream os = new ObjectOutputStream(fileOut);
             os.writeObject(info);
             os.close();
             fileOut.close();
-            System.out.printf("Serialized data is saved in /tmp/storageInfo.ser");
+            System.out.println("Serialized data is saved in /tmp/storageInfo.ser");
         } catch (IOException e) {
             e.printStackTrace();
         }
