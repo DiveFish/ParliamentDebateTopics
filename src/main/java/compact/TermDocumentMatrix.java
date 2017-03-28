@@ -201,10 +201,10 @@ public class TermDocumentMatrix {
             VectorIterator termIter = row.nonZeroIterator();
             while (termIter.hasNext()) {
                 termIter.next();
-                int val = termIter.index();
-                int idx = terms.binarySearch(val);
+                int termId = termIter.index();
+                int idx = terms.binarySearch(termId);
                 if (idx < 0) {
-                    terms.add(val);
+                    terms.add(termId);
                     freqs.add(1);
                 }
                 else {
