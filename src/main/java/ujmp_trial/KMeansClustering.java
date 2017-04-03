@@ -1,5 +1,6 @@
 package ujmp_trial;
 
+import gnu.trove.list.TDoubleList;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 
@@ -10,6 +11,7 @@ import org.apache.commons.math3.util.Pair;
 import org.ujmp.core.Matrix;
 import org.ujmp.core.calculation.Calculation;
 import org.ujmp.core.doublematrix.SparseDoubleMatrix2D;
+import org.ujmp.core.objectmatrix.impl.ObjectCalculationMatrix;
 import org.ujmp.core.util.MathUtil;
 import org.ujmp.core.util.VerifyUtil;
 
@@ -80,9 +82,9 @@ public class KMeansClustering {
             int closesCentroidIdx = 0;
 
             for (int i = 0; i < centroidSize; i++) {
-                SparseDoubleMatrix2D sgCentroid = (SparseDoubleMatrix2D) centroids.selectRows(Calculation.Ret.NEW, i);
-                //double similarity = sgCentroid.cosineSimilarityTo(documentVectors.selectRows(Calculation.Ret.NEW, row), true);
-                double similarity = getCosineSimilarity(sgCentroid, documentVectors.selectRows(Calculation.Ret.NEW, row), true);
+                ObjectCalculationMatrix sgCentroid = (ObjectCalculationMatrix) centroids.selectRows(Calculation.Ret.LINK, i);
+                //double similarity = sgCentroid.cosineSimilarityTo(documentVectors.selectRows(Calculation.Ret.LINK, row), true);
+                double similarity = getCosineSimilarity(sgCentroid, documentVectors.selectRows(Calculation.Ret.LINK, row), true);
                 if (similarity > maxSimilarity) {
                     maxSimilarity = similarity;
                     closesCentroidIdx = i; // index of closest centroid
@@ -143,10 +145,10 @@ public class KMeansClustering {
                 double maximum = -Double.MAX_VALUE;
                 int idx = -1;
                 for (int i = 0; i < centroids.getRowCount(); i++) {
-                    SparseDoubleMatrix2D centroid = (SparseDoubleMatrix2D) centroids.selectRows(Calculation.Ret.NEW, i);
+                    ObjectCalculationMatrix centroid = (ObjectCalculationMatrix) centroids.selectRows(Calculation.Ret.LINK, i);
                     
-                    //double similarity = centroid.cosineSimilarityTo(documentVectors.selectRows(Calculation.Ret.NEW, row), true);
-                    double similarity = getCosineSimilarity(centroid, documentVectors.selectRows(Calculation.Ret.NEW, row), true);
+                    //double similarity = centroid.cosineSimilarityTo(documentVectors.selectRows(Calculation.Ret.LINK, row), true);
+                    double similarity = getCosineSimilarity(centroid, documentVectors.selectRows(Calculation.Ret.LINK, row), true);
                     if (similarity > maximum) {
                         maximum = similarity;
                         idx = i; // index of closest centroid
@@ -163,7 +165,7 @@ public class KMeansClustering {
             centroids = SparseDoubleMatrix2D.Factory.zeros(0, vectorLength);
 
             for (int idx = 0; idx < adjustedCentroids.size(); idx++) {
-                centroids = (SparseDoubleMatrix2D) centroids.appendVertically(Calculation.Ret.NEW, documentVectors.selectRows(Calculation.Ret.NEW, adjustedCentroids.get(idx)).sum(Calculation.Ret.NEW, 0, true).divide(numOfClusterElements[idx]));
+                centroids = (SparseDoubleMatrix2D) centroids.appendVertically(Calculation.Ret.NEW, documentVectors.selectRows(Calculation.Ret.LINK, adjustedCentroids.get(idx)).sum(Calculation.Ret.NEW, 0, true).divide(numOfClusterElements[idx]));
             }
 
             cosine = objective / numOfDocs;
@@ -232,8 +234,8 @@ public class KMeansClustering {
 
         //Iterator<long[]> it1 = m1.selectRows(Calculation.Ret.ORIG, 0).divide(m1.norm2()).nonZeroCoordinates().iterator();
         //Iterator<long[]> it2 = m2.selectRows(Calculation.Ret.ORIG, 0).divide(m2.norm2()).nonZeroCoordinates().iterator();
-        Iterator<long[]> it1 = m1.selectRows(Calculation.Ret.ORIG, 0).nonZeroCoordinates().iterator();
-        Iterator<long[]> it2 = m2.selectRows(Calculation.Ret.ORIG, 0).nonZeroCoordinates().iterator();
+        Iterator<long[]> it1 = m1.selectRows(Calculation.Ret.LINK, 0).nonZeroCoordinates().iterator();
+        Iterator<long[]> it2 = m2.selectRows(Calculation.Ret.LINK, 0).nonZeroCoordinates().iterator();
 
         //Get norm
 

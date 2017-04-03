@@ -16,6 +16,8 @@ public class StorageInformation implements Serializable {
     private BiMap<String, Integer> documentIndices;
     //private Map<String, List<String>> metadata;
     private Map<Integer, Date> dateIds;
+    //TODO: Add matrix information
+    private SparseDoubleMatrix tfidf; // matrix information
 
     public StorageInformation() {
         centroids = SparseDoubleMatrix.Factory.zeros(0, 0);

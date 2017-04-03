@@ -2,7 +2,9 @@ package ujmp_trial;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.Iterables;
+import gnu.trove.list.TDoubleList;
 import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.io.IOException;
@@ -11,8 +13,8 @@ import java.util.*;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
 import org.apache.commons.math3.util.Pair;
-import org.ujmp.core.Matrix;
 import org.ujmp.core.calculation.Calculation;
+import org.ujmp.core.doublematrix.SparseDoubleMatrix;
 import org.ujmp.core.doublematrix.SparseDoubleMatrix2D;
 
 /**
@@ -31,12 +33,15 @@ public class TermDocumentMatrix {
 
     private static SparseDoubleMatrix2D counts;
 
+    private TDoubleList rowSizes;
+
     public TermDocumentMatrix(BiMap<String, Integer> documentIndices,
                               BiMap<String, Integer> tokenIndices, Set<Integer> mostFrequent) {
         this.documentIndices = documentIndices;
         this.tokenIndices = tokenIndices;
         //counts = new SparseDoubleMatrix2D(documentIndices.size(), tokenIndices.size());
         counts = SparseDoubleMatrix2D.Factory.zeros(documentIndices.size(), tokenIndices.size());
+        rowSizes = new TDoubleArrayList();
     }
 
     
@@ -54,6 +59,8 @@ public class TermDocumentMatrix {
         return counts;
     }
 
+    public TDoubleList vectorSizes() { return rowSizes; }
+
     /**
      * Transform the frequency into tf.idf matrix.
      *
@@ -61,8 +68,49 @@ public class TermDocumentMatrix {
      */
     public void tfIdf(TIntList documentFrequencies) {
         countsToTfIdf(documentFrequencies);
+        normalizeCountsMatrix();
     }
 
+    /**
+     * Calculate the term-frequency - inverse-document-frequency
+     * values for the raw frequency matrix.
+     * Save the overall row vector sizes for normalizing.
+     *
+     * @param documentFrequencies The terms' document frequencies
+     */
+
+    private void countsToTfIdf(TIntList documentFrequencies) {
+        int numOfDocuments = (int) counts.getRowCount();
+        int rowCount = 0;
+        double rowVecSize = 0;
+
+        Iterator<long[]> iter = counts.nonZeroCoordinates().iterator();
+        while (iter.hasNext()) {
+            long[] coords = iter.next();
+            int row = (int) coords[0];
+            int col = (int) coords[1];
+            double val = counts.getAsDouble(coords);
+            int docFreq = documentFrequencies.get(col);
+            double entry = 0;
+            if (docFreq > 0 && val > 0) {
+                entry =  val * Math.log((double) numOfDocuments / (double) docFreq);
+                counts.setAsDouble(entry , row, col);
+                rowVecSize += entry;
+            }
+
+            // Get size of row vector and reset it for next row
+            if (row > rowCount || !iter.hasNext()) {
+                rowSizes.add(Math.sqrt(rowVecSize * rowVecSize));
+                rowCount++;
+                rowVecSize = 0;
+            }
+        }
+
+        // Very slow too :(
+        //counts = (SparseDoubleMatrix2D) counts.normalize(Calculation.Ret.NEW, 1).toDoubleMatrix();
+    }
+
+/*
     private void countsToTfIdf(TIntList documentFrequencies) {
         int numOfDocuments = (int) counts.getRowCount();
         for (long[] l: counts.nonZeroCoordinates()) {
@@ -76,6 +124,18 @@ public class TermDocumentMatrix {
         }
         // Very slow too :(
         //counts = (SparseDoubleMatrix2D) counts.normalize(Calculation.Ret.NEW, 1).toDoubleMatrix();
+    }*/
+
+    /**
+     * Normalize the row vectors by dividing each
+     * element by the row vector size.
+     */
+    private void normalizeCountsMatrix(){
+        for (long[] l: counts.nonZeroCoordinates()) {
+            int row = (int) l[0];
+            int col = (int) l[1];
+            counts.setAsDouble(counts.getAsDouble(l) / rowSizes.get(row) , row, col);
+        }
     }
 
     /**
@@ -114,10 +174,17 @@ public class TermDocumentMatrix {
             return -cmp;
         });
 
-        for (int i = 0; i < document.getColumnCount(); i++) {
-            double tfidf = document.getAsDouble(0, i);
-            if (retain.contains(i)) {
-                sortedTerms.add(new Pair<>(i, tfidf));
+        //System.out.println("Retain "+retain);
+
+        Iterator<long[]> rowIter = document.nonZeroCoordinates().iterator();
+        while (rowIter.hasNext()) {
+            long[] coords = rowIter.next();
+            double tfIdf = document.getAsDouble(coords);
+            if (tfIdf > 0) {
+                int col = (int) coords[1];
+                if (retain.contains(col)) {
+                    sortedTerms.add(new Pair<>(col, tfIdf));
+                }
             }
         }
 
@@ -125,6 +192,8 @@ public class TermDocumentMatrix {
         for (Pair<Integer, Double> pair : Iterables.limit(sortedTerms, n)) {
             highestN.add(pair.getKey());
         }
+
+        //System.out.println("Highest n: "+highestN);
 
         return highestN;
     }
@@ -161,12 +230,16 @@ public class TermDocumentMatrix {
      */
     public TIntSet sharedTerms(TIntList cluster) {
         TIntSet shared = null;
-        
+
         for (int i = 0; i < cluster.size(); i++) {
-            Iterator<long[]> rowIter = counts.selectRows(Calculation.Ret.NEW, cluster.get(i)).nonZeroCoordinates().iterator();
+
+            Iterator<long[]> rowIter = counts.selectRows(Calculation.Ret.LINK, cluster.get(i)).nonZeroCoordinates().iterator();
             TIntSet docTermSet = new TIntHashSet();
             while(rowIter.hasNext()) {
-                docTermSet.add((int) rowIter.next()[1]);
+                //Why is coords[0] the column? Otherwise that would be the row?!
+                //TODO: Check if zero-values are included or not (even though it is a non-zero iterator)
+                long[] coords = rowIter.next(); //TODO: Delete after debugging
+                docTermSet.add((int) coords[0]);
             }
 
             if (i == 0) {
@@ -188,29 +261,31 @@ public class TermDocumentMatrix {
     public TIntSet partiallySharedTerms(TIntList cluster, double ratio) {
         TIntSet partShared = new TIntHashSet();
         TIntList terms = new TIntArrayList(); //list of terms occurring in this cluster
-        TIntList freqs = new TIntArrayList(); //the terms' frequencies (used as filter)
+        TIntList freqs = new TIntArrayList(); //the terms' cluster document frequencies (used as filter)
+        double threshold = cluster.size()*ratio; //term has to occur in at least x percent of the documents
 
         for (int i = 0; i < cluster.size(); i++) {
-            Iterator<long[]> rowIter = counts.selectRows(Calculation.Ret.NEW, cluster.get(i)).nonZeroCoordinates().iterator();
+            Iterator<long[]> rowIter = counts.selectRows(Calculation.Ret.LINK, cluster.get(i)).nonZeroCoordinates().iterator();
             while (rowIter.hasNext()) {
                 long[] coords = rowIter.next();
-                int termId = (int) coords[1];
+                int termId = (int) coords[0];
                 int idx = terms.binarySearch(termId);
                 if (idx < 0) {
                     terms.add(termId);
                     freqs.add(1);
-                }
-                else {
-                    freqs.set(idx, freqs.get(idx)+1);
+                } else {
+                    freqs.set(idx, freqs.get(idx) + 1);
                 }
             }
         }
 
         for (int j = 0; j < terms.size(); j++) {
-            if (freqs.get(j) > cluster.size()*ratio) {
+            if (freqs.get(j) >= threshold) {
                 partShared.add(terms.get(j));
             }
         }
+
+        //System.out.println("Part shared "+partShared);
 
         return partShared;
     }
