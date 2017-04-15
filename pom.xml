@@ -15,7 +15,7 @@
 		  </descriptorRefs>
 		  <archive>
 		      <manifest>
-			  <mainClass>compact.main</mainClass>
+			  <mainClass>ujmp_trial.main</mainClass>
 		      </manifest>
 		  </archive>
 	      </configuration>
