@@ -15,7 +15,9 @@ import java.util.Random;
  * @author Patricia Fischer
  */
 public class main {
-    private static final int NUM_OF_CLUSTERS = 200;//3000;
+    private static final int NUM_OF_CLUSTERS = 2;//3000;
+
+    private static double RATIO = 0.3;
 
     public static void main(String[] args) throws IOException {
         
@@ -23,14 +25,14 @@ public class main {
         File directory;
         
         //corpus = "taz";
-        //directory = new File("/home/patricia/NetBeansProjects/ParliamentDebateTopics/taz_samples/");
-        //directory = new File("/home/patricia/NetBeansProjects/ParliamentDebateTopics/taz/");
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz_samples/");
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz/");
         
         
         //corpus = "PolMine";
-        //directory = new File("/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized/");
-        //directory = new File("/home/patricia/NetBeansProjects/ParliamentDebateTopics/bundesparser-xml-tokenized-samples/");
-        //directory = new File("/home/patricia/NetBeansProjects/ParliamentDebateTopics/testFiles/");
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized/");
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized-sample/");
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/test/");
         
         
         
@@ -57,14 +59,15 @@ public class main {
         
         List<TIntList> clusters = kmc.clusters(centroids);
         for (TIntList cluster : clusters) {
-            //TIntSet sharedTerms = tdm.sharedTerms(cluster);
-            TIntSet sharedTerms = tdm.partiallySharedTerms(cluster, 1/3);
             if (cluster.isEmpty()) {
                 System.out.println("Empty cluster");
             }
             else {
                 // Earliest doc in cluster
                 System.out.println(documentIndicesInverted.get(kmc.earliestDoc(vocabulary.documentDates(), cluster)));
+
+                //TIntSet sharedTerms = tdm.sharedTerms(cluster);
+                TIntSet sharedTerms = tdm.partiallySharedTerms(cluster, RATIO);
 
                 System.out.println(cluster);
                 for (Integer c : cluster.toArray()) {
@@ -88,7 +91,8 @@ public class main {
                 System.out.println(documentIndicesInverted.get(kmc.earliestDoc(vocabulary.documentDates(), cluster)));
 
                 //TIntSet sharedTerms = tdm.sharedTerms(cluster);
-                TIntSet sharedTerms = tdm.partiallySharedTerms(cluster, 1/3);
+                TIntSet sharedTerms = tdm.partiallySharedTerms(cluster, RATIO);
+
                 System.out.println(cluster);
                 for (Integer c : cluster.toArray()) {
                     tdm.nMostRelevantTerms(tdm.counts().getRow(c).toSparseVector(), 10, vocabulary.tokenIndices(), sharedTerms);
