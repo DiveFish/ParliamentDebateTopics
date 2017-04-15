@@ -76,10 +76,10 @@ public class ReaderTaz implements Reader {
                     System.err.printf("No date found in article %s", fileId);
                 }
                 
-                Matcher mID = P_ID.matcher(feats);
+                Matcher mId = P_ID.matcher(feats);
                 int tokenId = 0;
-                if (mID.find()) {
-                    tokenId = Integer.parseInt(mID.group(0).substring(3));   //Find regex "nr:[0-9]+" in features
+                if (mId.find()) {
+                    tokenId = Integer.parseInt(mId.group(0).substring(3));   //Find regex "nr:[0-9]+" in features
                 }
                 else {
                     System.err.printf("No ID found in article %s", fileId);
@@ -92,13 +92,14 @@ public class ReaderTaz implements Reader {
                     newsMetadata.putIfAbsent(sectionId, Arrays.asList(newsDate));
                     fileContent.add(new HashMap());
                 }
-                
+
                 Map<String, Integer> wordFrequencies = fileContent.get(sectionIds.indexOf(sectionId));
-                
+
                 for (Token token : sent) {
                     String value = layer == Layer.LEMMA ?
                         token.getLemma().or("_") :
                         token.getForm().or("_");
+
                     if (stopwords.contains(value.toLowerCase())) {
                         continue;
                     }

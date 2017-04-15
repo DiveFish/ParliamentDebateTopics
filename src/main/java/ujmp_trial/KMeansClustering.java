@@ -127,7 +127,7 @@ public class KMeansClustering {
 
         SparseDoubleMatrix2D centroids = (SparseDoubleMatrix2D) documentVectors.selectRows(Calculation.Ret.NEW, seedDocs);
 
-        for (int iter = 0; iter < 1; iter++) { //TODO: change back to several iterations after testing
+        for (int iter = 0; iter < 5; iter++) { //TODO: test different #s of iterations
             double objective = 0;
 
             int[] numOfClusterElements = new int[numOfClusters];
@@ -165,7 +165,13 @@ public class KMeansClustering {
             centroids = SparseDoubleMatrix2D.Factory.zeros(0, vectorLength);
 
             for (int idx = 0; idx < adjustedCentroids.size(); idx++) {
-                centroids = (SparseDoubleMatrix2D) centroids.appendVertically(Calculation.Ret.NEW, documentVectors.selectRows(Calculation.Ret.LINK, adjustedCentroids.get(idx)).sum(Calculation.Ret.NEW, 0, true).divide(numOfClusterElements[idx]));
+                if (numOfClusterElements[idx] > 0) {
+                    centroids = (SparseDoubleMatrix2D) centroids.appendVertically(Calculation.Ret.NEW, documentVectors.selectRows(Calculation.Ret.LINK, adjustedCentroids.get(idx)).sum(Calculation.Ret.NEW, 0, true).divide(numOfClusterElements[idx]));
+                }
+                else {
+                    SparseDoubleMatrix2D emptyVector = SparseDoubleMatrix2D.Factory.zeros(1, vectorLength);
+                    centroids = (SparseDoubleMatrix2D) centroids.appendVertically(Calculation.Ret.NEW, emptyVector);
+                }
             }
 
             cosine = objective / numOfDocs;
@@ -175,6 +181,7 @@ public class KMeansClustering {
         return centroids;
     }
 
+    //happens in TermDocumentMatrix
     private void normalizeMatrix(Matrix m) {
         double length = 0;
         int rowNum = 0;

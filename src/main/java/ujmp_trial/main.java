@@ -16,25 +16,25 @@ import org.ujmp.core.doublematrix.SparseDoubleMatrix2D;
  * @author Patricia Fischer
  */
 public class main {
-    private static final int NUM_OF_CLUSTERS = 3;//3000;
+    private static final int NUM_OF_CLUSTERS = 300;//3000;
     
-    private static final double RATIO = 1;
+    private static final double RATIO = 0.3;
 
     public static void main(String[] args) throws IOException {
         System.out.printf("Running %s\n", main.class);
         String corpus;
         File directory;
-        
+        //output ok for taz (sample)
         //corpus = "taz";
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz-sample/");
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz/");
         
-        
+        //output ok for PolMine (sample) but excluding verbs would be helpful
         //corpus = "PolMine";
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/test/");
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized-minisample/");
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized-sample/");
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized/");
-        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/test/");
 
 
         if (args.length != 2) {
@@ -73,11 +73,11 @@ public class main {
                 for (Integer c : cluster.toArray()) {
                     tdm.nMostRelevantTerms((SparseDoubleMatrix2D) tdm.counts().selectRows(Calculation.Ret.NEW, c), 10, vocabulary.tokenIndices(), sharedTerms);
                 }
-                System.out.println();
             }
+            System.out.println();
         }
         
-        
+        /*
         
         System.out.println("____________________\n");
         System.out.println("Best clustering");
@@ -93,8 +93,8 @@ public class main {
                 // Earliest doc in cluster
                 System.out.println(documentIndicesInverted.get(kmc.earliestDoc(vocabulary.documentDates(), cluster)));
 
-                //TIntSet sharedTerms = tdm.sharedTerms(cluster);
-                TIntSet sharedTerms = tdm.partiallySharedTerms(cluster, RATIO);
+                TIntSet sharedTerms = tdm.sharedTerms(cluster);
+                //TIntSet sharedTerms = tdm.partiallySharedTerms(cluster, RATIO);
                 System.out.println(cluster);
                 for (Integer c : cluster.toArray()) {
                     tdm.nMostRelevantTerms((SparseDoubleMatrix2D) tdm.counts().selectRows(Calculation.Ret.NEW, c), 10, vocabulary.tokenIndices(), sharedTerms);
@@ -102,6 +102,9 @@ public class main {
             }
             System.out.println();
         }
+
+        */
+
         StorageInformation info = new StorageInformation(centroids, vocabulary.documentIndices(), vocabulary.documentDates());
         Storage store = new Storage();
         store.setStorageInfo(info);

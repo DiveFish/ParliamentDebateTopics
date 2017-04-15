@@ -111,6 +111,7 @@ public class TermDocumentMatrix {
     }
 
 /*
+    // CountsToTfIdf without vector length tracker
     private void countsToTfIdf(TIntList documentFrequencies) {
         int numOfDocuments = (int) counts.getRowCount();
         for (long[] l: counts.nonZeroCoordinates()) {
@@ -145,6 +146,7 @@ public class TermDocumentMatrix {
      */
     public void processSection(String sectionID, Map<String, Integer> wordFrequencies) throws IOException {
 
+        System.err.println("Doc ID: "+sectionID+" "+documentIndices.get(sectionID));
         Integer fileIDIndex = documentIndices.get(sectionID);
         if (fileIDIndex == null) {
             throw new IOException(String.format("Unknown file ID: %s", sectionID));
@@ -211,8 +213,10 @@ public class TermDocumentMatrix {
         TIntList idxs = nHighestTfIdfs(document, n, sharedTerms);
         List<String> terms = new ArrayList<>();
 
+        BiMap<Integer, String> tokenIndicesInverse = tokenIndices.inverse();
+
         for (int i = 0; i < idxs.size(); i++) {
-            terms.add(tokenIndices.inverse().get(idxs.get(i)));
+            terms.add(tokenIndicesInverse.get(idxs.get(i)));
         }
 
         System.out.println(terms);
@@ -232,14 +236,11 @@ public class TermDocumentMatrix {
         TIntSet shared = null;
 
         for (int i = 0; i < cluster.size(); i++) {
-
             Iterator<long[]> rowIter = counts.selectRows(Calculation.Ret.LINK, cluster.get(i)).nonZeroCoordinates().iterator();
             TIntSet docTermSet = new TIntHashSet();
             while(rowIter.hasNext()) {
                 //Why is coords[0] the column? Otherwise that would be the row?!
-                //TODO: Check if zero-values are included or not (even though it is a non-zero iterator)
-                long[] coords = rowIter.next(); //TODO: Delete after debugging
-                docTermSet.add((int) coords[0]);
+                docTermSet.add((int) rowIter.next()[0]);
             }
 
             if (i == 0) {
@@ -263,6 +264,7 @@ public class TermDocumentMatrix {
         TIntList terms = new TIntArrayList(); //list of terms occurring in this cluster
         TIntList freqs = new TIntArrayList(); //the terms' cluster document frequencies (used as filter)
         double threshold = cluster.size()*ratio; //term has to occur in at least x percent of the documents
+        System.out.println("Minimum cluster doc freq: "+threshold);
 
         for (int i = 0; i < cluster.size(); i++) {
             Iterator<long[]> rowIter = counts.selectRows(Calculation.Ret.LINK, cluster.get(i)).nonZeroCoordinates().iterator();
@@ -285,7 +287,7 @@ public class TermDocumentMatrix {
             }
         }
 
-        //System.out.println("Part shared "+partShared);
+        //System.out.println("Part shared: "+partShared);
 
         return partShared;
     }
