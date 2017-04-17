@@ -89,6 +89,15 @@ public class TermDocumentMatrix {
             long[] coords = iter.next();
             int row = (int) coords[0];
             int col = (int) coords[1];
+
+            // 1. Get size of row vector and reset it for NEXT row
+            // row > rowCount: We are now in the next row -> completed calculation of previous row's rowSize
+            if (row > rowCount && iter.hasNext()) {
+                rowSizes.add(Math.sqrt(rowVecSize * rowVecSize));
+                rowCount++;
+                rowVecSize = 0;
+            }
+
             double val = counts.getAsDouble(coords);
             int docFreq = documentFrequencies.get(col);
             double entry = 0;
@@ -98,11 +107,9 @@ public class TermDocumentMatrix {
                 rowVecSize += entry;
             }
 
-            // Get size of row vector and reset it for next row
-            if (row > rowCount || !iter.hasNext()) {
+            // 2. Get size of LAST row vector
+            if (!iter.hasNext()) {
                 rowSizes.add(Math.sqrt(rowVecSize * rowVecSize));
-                rowCount++;
-                rowVecSize = 0;
             }
         }
 
