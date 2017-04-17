@@ -214,7 +214,7 @@ public class TermDocumentMatrix {
         }
         
         for (int j = 0; j < terms.size(); j++) {
-            if (freqs.get(j) > cluster.size()*ratio) {
+            if (freqs.get(j) >= cluster.size()*ratio) {
                 partShared.add(terms.get(j));
             }
         }
