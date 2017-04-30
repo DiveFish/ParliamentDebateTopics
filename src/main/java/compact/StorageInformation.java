@@ -7,108 +7,86 @@ import org.la4j.iterator.MatrixIterator;
 import org.la4j.iterator.VectorIterator;
 import org.la4j.matrix.SparseMatrix;
 import org.la4j.vector.SparseVector;
-import org.ujmp.core.doublematrix.SparseDoubleMatrix2D;
 
 import java.io.Serializable;
 import java.util.*;
 
+/**
+ * @author Patricia Fischer
+ */
 public class StorageInformation implements Serializable {
 
-    private SparseDoubleMatrix2D serializableCounts; // matrix information
-    private SparseDoubleMatrix2D serializableCentroids;
     private BiMap<String, Integer> documentIndices;
-    //private Map<String, List<String>> metadata;
     private Map<Integer, Date> dateIds;
 
+    // Containers to serialize non-serializable matrix and centroid objects
+    private List<MatrixValue> serializableCounts;
+    // size of matrix:
+    private int numOfRows;
+    private int numOfCols;
+    private List<List<MatrixValue>> serializableCentroids;
+
+    // SparseMatrix and Vector from the la4j package are non-serializable objects
+    // -> fill with values from serialized list objects
     private SparseMatrix counts;
     private List<Vector> centroids;
 
     public StorageInformation() {
-        serializableCounts = SparseDoubleMatrix2D.Factory.zeros(0, 0);
-        serializableCentroids = SparseDoubleMatrix2D.Factory.zeros(0, 0);
+        serializableCounts = new ArrayList<>();
+        numOfRows = 0;
+        numOfCols = 0;
+        serializableCentroids = new ArrayList<>();
         documentIndices = HashBiMap.create();
-        //metadata = new HashMap<>();
         dateIds = new HashMap();
     }
 
-    public StorageInformation(SparseDoubleMatrix2D tfidf, SparseDoubleMatrix2D serializableCentroids, BiMap<String, Integer> documentIndices, Map<Integer, Date> dateIds) {
-        this.serializableCounts = tfidf;
+    public StorageInformation(List<MatrixValue> serializableCounts, int numOfRows, int numOfCols, List<List<MatrixValue>> serializableCentroids, BiMap<String, Integer> documentIndices, Map<Integer, Date> dateIds) {
+        this.serializableCounts = serializableCounts;
+        this.numOfRows = numOfRows;
+        this.numOfCols = numOfCols;
         this.serializableCentroids = serializableCentroids;
         this.documentIndices = documentIndices;
-        //this.metadata = metadata;
         this.dateIds = dateIds;
     }
 
-
-    public void matrixToSerializable(SparseMatrix counts) {
-        serializableCounts = SparseDoubleMatrix2D.Factory.zeros(counts.rows(), counts.columns());
+    public void countsToSerializable(SparseMatrix counts) {
         MatrixIterator matIter = counts.nonZeroIterator();
         while (matIter.hasNext()) {
             double val = matIter.next();
             int i = matIter.rowIndex();
             int j = matIter.columnIndex();
-            serializableCounts.setAsDouble(val, i, j);
+            serializableCounts.add(new MatrixValue(i, j, val));
         }
     }
 
-    public void serializableToMatrix() {
-        counts = SparseMatrix.zero((int) serializableCounts.getRowCount(), (int) serializableCounts.getColumnCount());
-        Iterator<long[]> iter = serializableCounts.nonZeroCoordinates().iterator();
-        while (iter.hasNext()) {
-            long[] coords = iter.next();
-            int row = (int) coords[0];
-            int col = (int) coords[1];
-            double val = serializableCounts.getAsDouble(coords);
-            counts.set(row, col, val);
+    public void serializableToCounts() {
+        counts = SparseMatrix.zero(numOfRows, numOfCols);
+        for (MatrixValue c : serializableCounts) {
+            counts.set(c.getRow(), c.getColumn(), c.getValue());
         }
     }
 
-    public void centroidsToSerializable(List<Vector> centroids) {
-        serializableCentroids = SparseDoubleMatrix2D.Factory.zeros(centroids.size(), serializableCounts.getColumnCount());
-        int row = 0;
-        for (Vector vec : centroids) {
-            VectorIterator matIter = vec.iterator();
-            while (matIter.hasNext()) {
-                int col = matIter.index();
-                double val = matIter.next();
-                serializableCentroids.setAsDouble(val, row, col);
+    public void centroidListToSerializable(List<Vector> centroidList) {
+        for (Vector centr : centroidList) {
+            List<MatrixValue> centrList = new ArrayList<>();
+            VectorIterator vIter = centr.toSparseVector().nonZeroIterator();
+            while (vIter.hasNext()) {
+                double val = vIter.next();
+                int i = vIter.index();
+                centrList.add(new MatrixValue(0, i, val)); // treat vector like a one-dimensionsional matrix
             }
-            row++;
+            serializableCentroids.add(centrList);
         }
     }
 
-    public void serializableToCentroids() {
+    public void serializableToCentroidList() {
         centroids = new ArrayList<>();
-        int rowSize = (int) serializableCentroids.getColumnCount();
-        int newRow = 0;
-        SparseVector vec = SparseVector.zero(rowSize);
-        Iterator<long[]> iter = serializableCentroids.nonZeroCoordinates().iterator();
-        while (iter.hasNext()) {
-            long[] coords = iter.next();
-            int row = (int) coords[0];
-            int col = (int) coords[1]+1;  //TODO: WHY column count by 1 too low >:(
-
-            // new row -> add vector of PREVIOUS row to vector list
-            if (row == newRow+1) {
-                centroids.add(vec);
-                newRow = row;
-                vec = SparseVector.zero(rowSize);
+        for (List<MatrixValue> vals : serializableCentroids) {
+            Vector centr = SparseVector.zero(numOfCols);
+            for (MatrixValue val : vals) {
+                centr.set(val.getColumn(), val.getValue());
             }
-            // in case of zero-rows (difference between row and newRow > 1) -> add empty vector
-            else if (row > newRow) {
-                while (row > newRow) {
-                    centroids.add(SparseVector.zero(rowSize));
-                    newRow++;
-                }
-                vec = SparseVector.zero(rowSize);
-            }
-
-            vec.set(col, serializableCentroids.getAsDouble(coords));
-
-            // at last non-zero coordinate -> add LAST vector to vector list
-            if (!iter.hasNext()) {
-                centroids.add(vec);
-            }
+            centroids.add(centr);
         }
     }
 

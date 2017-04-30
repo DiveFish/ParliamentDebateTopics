@@ -8,6 +8,7 @@ import org.ujmp.core.doublematrix.SparseDoubleMatrix2D;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -16,17 +17,19 @@ import java.util.Random;
  * @author Patricia Fischer
  */
 public class main {
-    private static final int NUM_OF_CLUSTERS = 800; //800 //3000;
+    private static final int NUM_OF_CLUSTERS = 1; //800 //3000;
 
-    private static double RATIO = 0.5;
+    private static double RATIO = 0.3;
 
     public static void main(String[] args) throws IOException {
         
         String corpus;
         File directory;
+        String storageDirectory;
+        storageDirectory = "/tmp/";
         
-        corpus = "taz";
-        directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz-sample/");
+        //corpus = "taz";
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz-sample/");  // 12 files -> 677 sections
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz/");
         
         
@@ -34,17 +37,18 @@ public class main {
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized/"); // 984 debates -> 215.080 sections
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized-sample/"); // 12 debates -> 2733 sections
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/test/");
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/PolTest/");
 
-        if (args.length != 2) {
-            System.out.println("Wrong number of arguments.Usage: 2, provide name of dataset (Polmine/Taz) path to data files");
+        if (args.length != 3) {
+            System.out.println("Wrong number of arguments.Usage: 3, provide name of dataset (Polmine/Taz), path to data files and path for storage");
         }
         corpus = args[0].toLowerCase();
         directory = new File(args[1]);
+        storageDirectory = args[2];
         
         MatrixBuilder mb = new MatrixBuilder();
         Vocabulary vocabulary = mb.buildVocabulary(corpus, directory);
-        TermDocumentMatrix tdm = mb.buildMatrix(corpus, directory, vocabulary);
-
+        TermDocumentMatrix tdm = mb.buildMatrix(corpus, directory, vocabulary); //1. term-doc matrix -> 2. tf-idf matrix
         // Mapping from doc ID to doc name
         BiMap<Integer, String> documentIndicesInverted = vocabulary.documentIndices().inverse();
         
@@ -104,17 +108,25 @@ public class main {
         SparseDoubleMatrix2D serializableMatrix = SparseDoubleMatrix2D.Factory.zeros(0, 0);
         SparseDoubleMatrix2D serializableCentroids = SparseDoubleMatrix2D.Factory.zeros(0, 0);
 
-        StorageInformation info = new StorageInformation(serializableMatrix, serializableCentroids, vocabulary.documentIndices(), vocabulary.documentDates());
-        info.matrixToSerializable(tdm.counts());
-        info.centroidsToSerializable(centroids);
+        List<MatrixValue> countVals = new ArrayList<>();
+        List<List<MatrixValue>> centroidVals = new ArrayList<>();
+        //StorageInformation info = new StorageInformation(serializableMatrix, serializableCentroids, vocabulary.documentIndices(), vocabulary.documentDates());
+        StorageInformation info = new StorageInformation(countVals, tdm.counts().rows(), tdm.counts().columns(), centroidVals, vocabulary.documentIndices(), vocabulary.documentDates());
+        //info.matrixToSerializable(tdm.counts());
+        //info.centroidsToSerializable(centroids);
 
-        Storage store = new Storage();
+        info.countsToSerializable(tdm.counts());
+        info.centroidListToSerializable(centroids);
+
+        Storage store = new Storage(storageDirectory);
         store.setStorageInfo(info);
         store.serialize();
         store.deserialize();
 
-        info.serializableToCentroids();
-        info.serializableToMatrix();
+        //info.serializableToCentroids();
+        //info.serializableToMatrix();
+        info.serializableToCounts();
+        info.serializableToCentroidList();;
         System.out.println("TFIDF   Rows/#docs: "+info.getCountsMatrix().rows()+", columns/#words: "+info.getCountsMatrix().columns());
         System.out.println("CENTROIDS   Rows/#centroids: "+info.getCentroids().size()+", columns/#words: "+info.getCentroids().get(0).length());
         System.out.println("First doc date: "+info.getDocumentDates().get(0));

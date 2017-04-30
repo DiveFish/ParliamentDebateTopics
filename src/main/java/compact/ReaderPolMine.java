@@ -1,7 +1,12 @@
 package compact;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +39,14 @@ public class ReaderPolMine implements Reader {
     private static List<String> debateIds;
     
     private static String debateId;
+
+    private static List<String> wordCount;
+    private static int words;
+    private static List<String> sentCount;
+    private static int sents;
+
+    private int processed;
+    private int allProcessed = 984;
     
     public ReaderPolMine(Layer layer) {
         this.layer = layer;
@@ -42,6 +55,10 @@ public class ReaderPolMine implements Reader {
         parserFactory.setNamespaceAware(false);
         parserFactory.setValidating(false);
         parserFactory.setXIncludeAware(false);
+
+        processed = 0;
+        wordCount = new ArrayList<>();
+        sentCount = new ArrayList<>();
     }
 
     /**
@@ -61,8 +78,23 @@ public class ReaderPolMine implements Reader {
             if (debateId.endsWith(".xml")){
                   System.out.println(String.format("Parsing file %s ...", debateId));
                   saxParser.parse(xmlFile, xmlHandler);
+                  processed++;
             }
-            
+            // Save counts to files only after all files have been processed
+            if (processed == allProcessed) {
+                System.out.println("-- SAVING COUNTS --");
+                File polMineSecWordCount = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/counts/PolMine_wordsPerSection.txt");
+                FileWriter fwWordsPerSection = new FileWriter(polMineSecWordCount, true);
+                Path wordsPerSection = Paths.get("/home/patricia/Dokumente/Bachelorarbeit/Corpora/counts/PolMine_wordsPerSection.txt");
+                Files.write(wordsPerSection, wordCount, Charset.forName("UTF-8"));
+                fwWordsPerSection.close();
+
+                File polMineSecSentCount = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/counts/PolMine_sentencesPerSection.txt");
+                FileWriter fwWSentPerSection = new FileWriter(polMineSecSentCount, true);
+                Path sentsPerSection = Paths.get("/home/patricia/Dokumente/Bachelorarbeit/Corpora/counts/PolMine_sentencesPerSection.txt");
+                Files.write(sentsPerSection, sentCount, Charset.forName("UTF-8"));
+                fwWSentPerSection.close();
+            }
         } catch (ParserConfigurationException | SAXException | IOException e) {
             throw new IOException(e);
         }
@@ -91,6 +123,7 @@ public class ReaderPolMine implements Reader {
         private int sectionId;
 
         private boolean inDate;
+        private boolean inSentence;
         private boolean inToken;
         
         private final Set<String> stopwords;
@@ -102,6 +135,7 @@ public class ReaderPolMine implements Reader {
             date = "";
             sectionId = 1;
             inDate = false;
+            inSentence = false;
             inToken = false;
         }
 
@@ -153,12 +187,16 @@ public class ReaderPolMine implements Reader {
         @Override
         public void startElement(String namespaceURI, String localName, String qName, Attributes attrs) throws SAXException {
             switch (qName) {
+                case "sentence":
+                    inSentence = true;
                 case "token":
                     inToken = true;
                     break;
                 case "body":
                     break;
                 case "speaker":
+                    words = 0;
+                    sents = 0;
                     content = new HashMap();
                     metadata.set(0, date);
                     metadata.set(1, attrs.getValue("name"));
@@ -173,12 +211,18 @@ public class ReaderPolMine implements Reader {
         @Override
         public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
             switch (qName) {
+                case "sentence":
+                    sents++;
+                    inSentence = false;
                 case "token":
+                    words++;
                     inToken = false;
                     break;
                 case "body":
                     break;
                 case "speaker":
+                    wordCount.add(words+"");
+                    sentCount.add(sents+"");
                     debateIds.add(debateId+"_"+sectionId);
                     debateContent.add(content);
                     debateMetadata.putIfAbsent(debateId+"_"+sectionId, metadata);

@@ -1,9 +1,18 @@
 # ParliamentDebateTopics
-...detects topics and topic changes in German parliamentary debates and relates them to taz articles.
-For now, only the matrix and cluster representation of the PolMine debates and the taz articles has been implemented.
+...detects topics and topic changes in German parliamentary debates and will (hopefully at some point) relate them to taz articles.
 
-Usage: InputHandler.java corpus fileDirectory
+Usage: corpus fileDirectory storageDirectory
 
--> Depending on the input, run InputHandler with "polmine" or "taz" as first and the source directory of the data files as second argument. What you will get are the clusters from this data set.
+Instructions:
+Depending on the input, run .jar with "PolMine" or "taz" (case INsensitive) as first argument,
+the source directory of the PolMine/taz data files as second
+and the directory where the serialized data shall be stored as third argument.
+The taz corpus is assumed to be split into sub-directories containing the publications from one year each.
+Note: You can also hardcode the corpus and file directory in main().
 
-You can also hardcode the corpus and file directory in the InputHandler. 
+Output:
+The program will for each cluster return the date and file id of the earliest document in the cluster
+and the most relevant terms for all documents. Most relevant are those terms which have high tf-idfs
+and occur in several of the cluster documents (change the ratio in main(), 1 = term has to occur in all docs, 0 = term occurs in one doc).
+
+

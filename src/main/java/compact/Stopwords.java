@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Load stopword list from file.
+ * Load stopword list from file or array.
  *
  * @author Patricia Fischer
  */

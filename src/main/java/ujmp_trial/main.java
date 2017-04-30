@@ -16,9 +16,9 @@ import org.ujmp.core.doublematrix.SparseDoubleMatrix2D;
  * @author Patricia Fischer
  */
 public class main {
-    private static final int NUM_OF_CLUSTERS = 300;//3000;
+    private static final int NUM_OF_CLUSTERS = 5;//3000;
     
-    private static final double RATIO = 0.3;
+    private static final double RATIO = 0.5;
 
     public static void main(String[] args) throws IOException {
         System.out.printf("Running %s\n", main.class);
@@ -30,10 +30,10 @@ public class main {
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz/");
         
         //output ok for PolMine (sample) but excluding verbs would be helpful
-        //corpus = "PolMine";
+        corpus = "PolMine";
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/test/");
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized-minisample/");
-        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized-sample/");
+        directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized-sample/");
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized/");
 
 
@@ -41,8 +41,8 @@ public class main {
             System.out.println("Wrong number of arguments.Usage: 2, provide name of dataset (Polmine/Taz) path to data files");
             //System.exit(1);
         }
-        corpus = args[0].toLowerCase();
-        directory = new File(args[1]);
+        //corpus = args[0].toLowerCase();
+        //directory = new File(args[1]);
         
         MatrixBuilder mb = new MatrixBuilder();
         Vocabulary vocabulary = mb.buildVocabulary(corpus, directory);
@@ -105,14 +105,15 @@ public class main {
 
         */
 
-        StorageInformation info = new StorageInformation(centroids, vocabulary.documentIndices(), vocabulary.documentDates());
+        StorageInformation info = new StorageInformation(tdm.counts(), centroids, vocabulary.documentIndices(), vocabulary.documentDates());
         Storage store = new Storage();
         store.setStorageInfo(info);
         store.serialize();
         store.deserialize();
-        System.out.println("Rows/docs: "+info.getCentroids().getSize()[0]+", columns/words: "+info.getCentroids().getSize()[1]);
-        System.out.println(info.getDocumentDates().get(0));
-        System.out.println(info.getDocumentIndices().inverse().get(0));
+        System.out.println("TFIDF   Rows/#docs: "+info.getTfidf().getSize()[0]+", columns/#words: "+info.getTfidf().getSize()[1]);
+        System.out.println("CENTROIDS   Rows/#centroids: "+info.getCentroids().getSize()[0]+", columns/#words: "+info.getCentroids().getSize()[1]);
+        System.out.println("First doc date: "+info.getDocumentDates().get(0));
+        System.out.println("First doc filename: "+info.getDocumentIndices().inverse().get(0));
     }
     
 }

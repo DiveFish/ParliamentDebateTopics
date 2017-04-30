@@ -28,7 +28,6 @@ public class MatrixBuilder {
         Reader read = getReader(corpus, LAYER);
         List<File> files = getFiles(corpus, directory, fileExtension);
 
-
         Vocabulary vocabulary = new Vocabulary(LAYER);
 
         int filesDone = 0;

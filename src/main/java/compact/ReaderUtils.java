@@ -35,11 +35,13 @@ public class ReaderUtils {
     }
 
     public static Reader getReader(String corpus, Layer layer) throws IOException {
-        Reader read = new ReaderPolMine(layer);
+        //Reader read = new ReaderPolMine(layer);
+        Reader read = new ReaderPolMineMixed(layer);
         if (corpus.equalsIgnoreCase("taz")) {
             read = new ReaderTaz(layer);
         } else if (corpus.equalsIgnoreCase("PolMine")) {
-            read = new ReaderPolMine(layer);
+            //read = new ReaderPolMine(layer);
+            read = new ReaderPolMineMixed(layer);
         } else {
             System.err.println("Provide a corpus name, choose between PolMine and taz.");
         }
@@ -51,7 +53,8 @@ public class ReaderUtils {
         if (corpus.equalsIgnoreCase("taz")) {
             fileExtension = ".conll.gz";
         } else if (corpus.equalsIgnoreCase("PolMine")) {
-            fileExtension = ".xml";
+            //fileExtension = ".xml";
+            fileExtension = ".conll.gz";
         } else {
             throw new IllegalArgumentException(String.format("Unknown corpus type: %s", corpus));
         }

@@ -3,20 +3,26 @@ package compact;
 import java.io.*;
 
 /**
- * Created by patricia on 26/03/17.
+ *
+ * @author Patricia Fischer
  */
 public class Storage {
 
     private StorageInformation info;
+    private String storageDirectory;
+
+    public Storage(String storageDirectory) {
+        this.storageDirectory = storageDirectory;
+    }
 
     public void serialize() {
         try {
-            FileOutputStream fileOut = new FileOutputStream("/tmp/storageInfo.ser");
+            FileOutputStream fileOut = new FileOutputStream(storageDirectory+"storageInfo.ser");
             ObjectOutputStream os = new ObjectOutputStream(fileOut);
             os.writeObject(info);
             os.close();
             fileOut.close();
-            System.out.println("Serialized data is saved in /tmp/storageInfo.ser");
+            System.out.printf("Serialized data is saved in %sstorageInfo.ser", storageDirectory);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -24,7 +30,7 @@ public class Storage {
 
     public void deserialize() {
         try {
-            FileInputStream fileIn = new FileInputStream("/tmp/storageInfo.ser");
+            FileInputStream fileIn = new FileInputStream(storageDirectory+"storageInfo.ser");
             ObjectInputStream is = new ObjectInputStream(fileIn);
             setStorageInfo((StorageInformation) is.readObject());
             is.close();
