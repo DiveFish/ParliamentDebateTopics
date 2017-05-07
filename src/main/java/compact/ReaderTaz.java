@@ -42,10 +42,8 @@ public class ReaderTaz implements Reader {
     
     private static List<Map<String, Integer>> fileContent;  // content of all sections, each section one HashMap
     
-    private static List<String> sectionIds; // IDs of all sections
-    
-    private static final Pattern P_ID = Pattern.compile("nr:([0-9]+)");
-    
+    private static List<String> articleIds; // IDs of all sections/files
+
     private static final Pattern P_DATE = Pattern.compile("dat:([0-9]){2}\\.([0-9]){2}\\.([0-9]){2}");
     
     
@@ -63,9 +61,14 @@ public class ReaderTaz implements Reader {
     @Override
     public void processFile(File conllFile) throws IOException {
         fileContent = new ArrayList();
-        sectionIds = new ArrayList();
+        fileContent.add(new HashMap());
+
         String fileId = conllFile.getName();
-        
+        String newsDate = "";
+
+        articleIds = new ArrayList<>();
+        articleIds.add(fileId);
+
         //System.err.println(String.format("Processing file %s", fileId));
         
         try (CONLLReader conllReader = new CONLLReader(new BufferedReader(new InputStreamReader(new GZIPInputStream(
@@ -74,8 +77,7 @@ public class ReaderTaz implements Reader {
                 List<Token> sent = sentence.getTokens();
                 
                 String feats = sent.get(0).getFeatures().or("_");
-                
-                String newsDate = "";
+
                 Matcher md = P_DATE.matcher(feats);
                 if (md.find()) {
                     newsDate =  md.group().substring(4);   //Find regex "dat: num{2}.num{2}.num{2}" in features
@@ -83,25 +85,8 @@ public class ReaderTaz implements Reader {
                 else {
                     System.err.printf("No date found in article %s", fileId);
                 }
-                
-                Matcher mID = P_ID.matcher(feats);
-                int tokenId = 0;
-                if (mID.find()) {
-                    tokenId = Integer.parseInt(mID.group(0).substring(3));   //Find regex "nr:[0-9]+" in features
-                }
-                else {
-                    System.err.printf("No ID found in article %s", fileId);
-                }
-                String sectionId = fileId + "_" + tokenId;
-                
-                // Encountered new article section
-                if (!sectionIds.contains(sectionId)) {
-                    sectionIds.add(sectionId);
-                    newsMetadata.putIfAbsent(sectionId, Arrays.asList(newsDate));
-                    fileContent.add(new HashMap());
-                }
-                
-                Map<String, Integer> wordFrequencies = fileContent.get(sectionIds.indexOf(sectionId));
+
+                Map<String, Integer> wordFrequencies = fileContent.get(articleIds.indexOf(fileId));
                 
                 for (Token token : sent) {
                     String value = layer == Layer.LEMMA ?
@@ -115,10 +100,24 @@ public class ReaderTaz implements Reader {
                     //if (!token.getPosTag().or("_").equals("CARD")) {
                     //if (!token.getPosTag().or("_").equals("TRUNC")) {    
                     //if (!token.getPosTag().or("_").equals("VVFIN")) {    
-                    if (!token.getPosTag().or("_").equals("VVPP")) {    
+                    //if (!token.getPosTag().or("_").equals("VVPP")) {
                     //if (!token.getPosTag().or("_").equals("ADJA")||token.getPosTag().or("_").equals("ADV")||token.getPosTag().or("_").equals("ADJD")) {
                     //if (!token.getPosTag().or("_").equals("NE")) {
                     //if (!(token.getPosTag().or("_").equals("NN")||token.getPosTag().or("_").equals("NE"))) {
+
+                    // Other
+                    //if (!token.getPosTag().or("_").equals("CARD") || token.getPosTag().or("_").equals("FM")
+                    //        || token.getPosTag().or("_").equals("XY")) {
+                    // Verbal
+                    //if (!token.getPosTag().or("_").equals("VVFIN") || token.getPosTag().or("_").equals("VVINF")
+                    //        || token.getPosTag().or("_").equals("VVIZU")|| token.getPosTag().or("_").equals("VVPP")) {
+                    // Adjectival/adverbial
+                    //if (!token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD")||token.getPosTag().or("_").equals("ADV")) {
+                    // Nominal
+                    //if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE")||token.getPosTag().or("_").equals("TRUNC"))) {
+                    //COMBINED: NN, NE, TRUNC, ADJA, ADJD, CARD
+                    if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE") || token.getPosTag().or("_").equals("TRUNC") ||
+                            token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD") || token.getPosTag().or("_").equals("CARD"))) {
                         continue;
                     }
                     
@@ -130,7 +129,7 @@ public class ReaderTaz implements Reader {
                     }
                 }
             }
-            
+            newsMetadata.putIfAbsent(fileId, Arrays.asList(newsDate));
         }
     }
     
@@ -141,7 +140,7 @@ public class ReaderTaz implements Reader {
     
     @Override
     public List<String> getSectionIDs() {
-        return sectionIds;
+        return articleIds;
     }
     
     @Override

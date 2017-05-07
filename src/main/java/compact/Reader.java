@@ -13,11 +13,11 @@ import java.util.Map;
  */
 public interface Reader {
     
-    public void processFile(File file) throws IOException;
+    void processFile(File file) throws IOException;
     
-    public List<Map<String, Integer>> getContent();
+    List<Map<String, Integer>> getContent();
     
-    public List<String> getSectionIDs();
+    List<String> getSectionIDs();
     
-    public Map<String, List<String>> getMetadata();
+    Map<String, List<String>> getMetadata();
 }

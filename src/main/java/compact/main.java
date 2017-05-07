@@ -14,7 +14,7 @@ import java.util.*;
  * @author Patricia Fischer
  */
 public class main {
-    private static final int NUM_OF_CLUSTERS = 250; //800 //3000;
+    private static final int NUM_OF_CLUSTERS = 700; //800 //3000;
 
     private static double ratio = 0.3;
 
@@ -23,17 +23,17 @@ public class main {
         String corpus;
         File directory;
         String storageDirectory;
-        storageDirectory = "/home/patricia/Dokumente/Bachelorarbeit/Results/PolMine/LEMMAS/Mixed/";
+        storageDirectory = "/home/patricia/Dokumente/Bachelorarbeit/Results/taz/";
         
-        //corpus = "taz";
+        corpus = "taz";
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz-sample/");  // 12 files -> 677 sections
-        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz/");
+        directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz/");
 
-        corpus = "PolMine";
+        //corpus = "PolMine";
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized/"); // 984 debates -> 215.080 sections
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized-sample/"); // 12 debates -> 2733 sections
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/test/");
-        directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-conll-xml/");
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-conll-xml/");
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-conll-xml-sample/");
 
         if (args.length != 3) {
@@ -86,6 +86,7 @@ public class main {
                 System.out.println(documentIndicesInverted.get(kmc.earliestDoc(vocabulary.documentDates(), cluster)));
 
 
+                ratio = 0.3;
                 System.out.printf("--%f ratio--", ratio);
                 //TIntSet sharedTerms = tdm.sharedTerms(cluster);
                 TIntSet sharedTerms = tdm.partiallySharedTerms(cluster, ratio);

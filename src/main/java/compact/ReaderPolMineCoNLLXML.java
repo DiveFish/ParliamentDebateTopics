@@ -21,8 +21,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.math3.util.Pair;
 import org.xml.sax.Attributes;
@@ -43,7 +41,7 @@ public class ReaderPolMineCoNLLXML implements Reader {
 
     private final Layer layer;
 
-    private final Map<String, List<String>> newsMetadata;  // section ID <-> date
+    private final Map<String, List<String>> debateMetadata;  // section/file ID <-> date
 
     private final SAXParserFactory parserFactory;
 
@@ -57,7 +55,7 @@ public class ReaderPolMineCoNLLXML implements Reader {
 
     public ReaderPolMineCoNLLXML(Layer layer) throws IOException {
         this.layer = layer;
-        newsMetadata = new HashMap();
+        debateMetadata = new HashMap();
         this.stopwords = Stopwords.stopwords();
 
         parserFactory = SAXParserFactory.newInstance();
@@ -128,7 +126,7 @@ public class ReaderPolMineCoNLLXML implements Reader {
                 }
             }
             readDate(conllFile);
-            newsMetadata.putIfAbsent(fileId, Arrays.asList(date));
+            debateMetadata.putIfAbsent(fileId, Arrays.asList(date));
             fileContent.add(wordFrequencies);
         }
     }
@@ -196,7 +194,7 @@ public class ReaderPolMineCoNLLXML implements Reader {
 
     @Override
     public Map<String, List<String>> getMetadata() {
-        return newsMetadata;
+        return debateMetadata;
     }
 
     /**
@@ -238,7 +236,7 @@ public class ReaderPolMineCoNLLXML implements Reader {
         Map<Integer, Date> dateIDs = new HashMap();
 
         for (int i = 0; i < docsByIdx.size(); i++) {
-            dateIDs.putIfAbsent(i, stringToDate(newsMetadata.get(docsByIdx.get(i)).get(0)));  // get date from metadata
+            dateIDs.putIfAbsent(i, stringToDate(debateMetadata.get(docsByIdx.get(i)).get(0)));  // get date from metadata
         }
         return dateIDs;
     }
