@@ -39,7 +39,7 @@ import javax.xml.parsers.SAXParserFactory;
  *
  * @author Daniël de Kok and Patricia Fischer
  */
-public class ReaderPolMineMixed implements Reader {
+public class ReaderPolMineCoNLLXML implements Reader {
 
     private final Layer layer;
 
@@ -55,7 +55,7 @@ public class ReaderPolMineMixed implements Reader {
 
     private static String date;
 
-    public ReaderPolMineMixed(Layer layer) throws IOException {
+    public ReaderPolMineCoNLLXML(Layer layer) throws IOException {
         this.layer = layer;
         newsMetadata = new HashMap();
         this.stopwords = Stopwords.stopwords();
@@ -83,7 +83,7 @@ public class ReaderPolMineMixed implements Reader {
 
         Map<String, Integer> wordFrequencies = fileContent.get(debateIds.indexOf(fileId));
 
-        System.out.println(String.format("Processing file %s", fileId));
+        //System.err.println(String.format("Processing file %s", fileId));
 
         try (CONLLReader conllReader = new CONLLReader(new BufferedReader(new InputStreamReader(new GZIPInputStream(
                 new FileInputStream(conllFile)))))) {
@@ -99,14 +99,24 @@ public class ReaderPolMineMixed implements Reader {
                     }
 
                     // Exclude all words except proper nouns or proper and common nouns
-                    //if (!token.getPosTag().or("_").equals("CARD")) {
                     //if (!token.getPosTag().or("_").equals("TRUNC")) {
-                    //if (!token.getPosTag().or("_").equals("VVFIN")) {
-                    if (!token.getPosTag().or("_").equals("VVPP")) {
-                        //if (!token.getPosTag().or("_").equals("ADJA")||token.getPosTag().or("_").equals("ADV")||token.getPosTag().or("_").equals("ADJD")) {
-                        //if (!token.getPosTag().or("_").equals("NE")) {
-                        //if (!(token.getPosTag().or("_").equals("NN")||token.getPosTag().or("_").equals("NE"))) {
-                        continue;
+                    //if (!token.getPosTag().or("_").equals("VVPP")) {
+                    //if (!token.getPosTag().or("_").equals("NE")) {
+
+                    // Other
+                    //if (!token.getPosTag().or("_").equals("CARD") || token.getPosTag().or("_").equals("FM")
+                    //        || token.getPosTag().or("_").equals("XY")) {
+                    // Verbal
+                    //if (!token.getPosTag().or("_").equals("VVFIN") || token.getPosTag().or("_").equals("VVINF")
+                    //        || token.getPosTag().or("_").equals("VVIZU")|| token.getPosTag().or("_").equals("VVPP")) {
+                    // Adjectival/adverbial
+                    //if (!token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD")||token.getPosTag().or("_").equals("ADV")) {
+                    // Nominal
+                    //if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE")||token.getPosTag().or("_").equals("TRUNC"))) {
+                    //COMBINED: NN, NE, TRUNC, ADJA, ADJD, CARD
+                    if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE") || token.getPosTag().or("_").equals("TRUNC") ||
+                            token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD") || token.getPosTag().or("_").equals("CARD"))) {
+                            continue;
                     }
 
                     if (!wordFrequencies.containsKey(value)) {
@@ -131,7 +141,7 @@ public class ReaderPolMineMixed implements Reader {
             File xmlFile = new File(conllFile.getPath().substring(0, conllFile.getPath().length()-8)+"xml");
             String fileId = xmlFile.getName();
             if (fileId.endsWith(".xml") && xmlFile.exists()){
-                System.out.println(String.format("Getting date from xml file %s ...", fileId));
+                //System.err.println(String.format("Getting date from xml file %s ...", fileId));
                 saxParser.parse(xmlFile, xmlHandler);
             }
         } catch (ParserConfigurationException | SAXException | IOException e) {

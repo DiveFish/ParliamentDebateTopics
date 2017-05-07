@@ -66,7 +66,7 @@ public class ReaderTaz implements Reader {
         sectionIds = new ArrayList();
         String fileId = conllFile.getName();
         
-        System.out.println(String.format("Processing file %s", fileId));
+        //System.err.println(String.format("Processing file %s", fileId));
         
         try (CONLLReader conllReader = new CONLLReader(new BufferedReader(new InputStreamReader(new GZIPInputStream(
                 new FileInputStream(conllFile)))))) {

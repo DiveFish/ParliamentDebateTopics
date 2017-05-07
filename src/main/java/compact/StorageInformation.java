@@ -17,6 +17,7 @@ import java.util.*;
 public class StorageInformation implements Serializable {
 
     private BiMap<String, Integer> documentIndices;
+    private BiMap<String, Integer> tokenIndices;
     private Map<Integer, Date> dateIds;
 
     // Containers to serialize non-serializable matrix and centroid objects
@@ -37,19 +38,21 @@ public class StorageInformation implements Serializable {
         numOfCols = 0;
         serializableCentroids = new ArrayList<>();
         documentIndices = HashBiMap.create();
+        tokenIndices = HashBiMap.create();
         dateIds = new HashMap();
     }
 
-    public StorageInformation(List<MatrixValue> serializableCounts, int numOfRows, int numOfCols, List<List<MatrixValue>> serializableCentroids, BiMap<String, Integer> documentIndices, Map<Integer, Date> dateIds) {
+    public StorageInformation(List<MatrixValue> serializableCounts, int numOfRows, int numOfCols, List<List<MatrixValue>> serializableCentroids, BiMap<String, Integer> documentIndices,BiMap<String, Integer> tokenIndices, Map<Integer, Date> dateIds) {
         this.serializableCounts = serializableCounts;
         this.numOfRows = numOfRows;
         this.numOfCols = numOfCols;
         this.serializableCentroids = serializableCentroids;
         this.documentIndices = documentIndices;
+        this.tokenIndices = tokenIndices;
         this.dateIds = dateIds;
     }
 
-    public void countsToSerializable(SparseMatrix counts) {
+    public void matrixToSerializable(SparseMatrix counts) {
         MatrixIterator matIter = counts.nonZeroIterator();
         while (matIter.hasNext()) {
             double val = matIter.next();
@@ -59,14 +62,14 @@ public class StorageInformation implements Serializable {
         }
     }
 
-    public void serializableToCounts() {
+    public void serializableToMatrix() {
         counts = SparseMatrix.zero(numOfRows, numOfCols);
         for (MatrixValue c : serializableCounts) {
             counts.set(c.getRow(), c.getColumn(), c.getValue());
         }
     }
 
-    public void centroidListToSerializable(List<Vector> centroidList) {
+    public void centroidsToSerializable(List<Vector> centroidList) {
         for (Vector centr : centroidList) {
             List<MatrixValue> centrList = new ArrayList<>();
             VectorIterator vIter = centr.toSparseVector().nonZeroIterator();
@@ -79,7 +82,7 @@ public class StorageInformation implements Serializable {
         }
     }
 
-    public void serializableToCentroidList() {
+    public void serializableToCentroids() {
         centroids = new ArrayList<>();
         for (List<MatrixValue> vals : serializableCentroids) {
             Vector centr = SparseVector.zero(numOfCols);
@@ -98,6 +101,10 @@ public class StorageInformation implements Serializable {
 
     public BiMap<String, Integer> getDocumentIndices() {
         return documentIndices;
+    }
+
+    public BiMap<String, Integer> getTokenIndices() {
+        return tokenIndices;
     }
 
     public Map<Integer, Date> getDocumentDates() {

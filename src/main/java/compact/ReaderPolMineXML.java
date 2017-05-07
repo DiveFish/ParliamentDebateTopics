@@ -26,7 +26,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
  * @author Daniël de Kok and Patricia Fischer
  */
-public class ReaderPolMine implements Reader {
+public class ReaderPolMineXML implements Reader {
     
     private final Layer layer;
 
@@ -48,7 +48,7 @@ public class ReaderPolMine implements Reader {
     private int processed;
     private int allProcessed = 984;
     
-    public ReaderPolMine(Layer layer) {
+    public ReaderPolMineXML(Layer layer) {
         this.layer = layer;
         debateMetadata = new HashMap();
         parserFactory = SAXParserFactory.newInstance();
@@ -76,13 +76,13 @@ public class ReaderPolMine implements Reader {
             
             debateId = xmlFile.getName();
             if (debateId.endsWith(".xml")){
-                  System.out.println(String.format("Parsing file %s ...", debateId));
+                  //System.err.println(String.format("Parsing file %s ...", debateId));
                   saxParser.parse(xmlFile, xmlHandler);
                   processed++;
             }
-            // Save counts to files only after all files have been processed
+            // Save statistics to files only after all files have been processed
             if (processed == allProcessed) {
-                System.out.println("-- SAVING COUNTS --");
+                System.err.println("-- SAVING COUNTS --");
                 File polMineSecWordCount = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/counts/PolMine_wordsPerSection.txt");
                 FileWriter fwWordsPerSection = new FileWriter(polMineSecWordCount, true);
                 Path wordsPerSection = Paths.get("/home/patricia/Dokumente/Bachelorarbeit/Corpora/counts/PolMine_wordsPerSection.txt");

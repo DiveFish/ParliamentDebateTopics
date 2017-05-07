@@ -2,21 +2,22 @@ package compact;
 
 import com.carrotsearch.hppc.BitSet;
 import com.google.common.base.Preconditions;
-import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.math3.random.GaussianRandomGenerator;
 import org.apache.commons.math3.random.RandomGenerator;
 import org.la4j.Vector;
+import org.la4j.iterator.VectorIterator;
 import org.la4j.vector.SparseVector;
 
 /**
- * Random projection hashing for integer vectors.
+ * Random projection hashing for double vectors.
  *
- * @author Daniël de Kok &lt;me@danieldk.eu&gt;
+ * @author Daniël de Kok and Patricia Fischer
  */
 public class RandomProjectionHash {
-    private final int bits;
 
-    private final double[] hashes;
+    private final int bits; //number of bits correlating with number of hash vectors
+
+    private final double[] hashes;  //a 1D-array containing all randomly generated hash vectors
 
     public RandomProjectionHash(RandomGenerator generator, int vectorLength, int bits) {
         this.bits = bits;
@@ -40,24 +41,31 @@ public class RandomProjectionHash {
         BitSet hash = new BitSet(bits);
 
         for (int i = 0; i < bits; ++i) {
-            final MutableDouble dp = new MutableDouble();
-            final int idx = i;
-/*
-            vector.set();
+
             //function calls for every non-zero component of vector
             //computing dot-product
             //current non-zero vector component
             //non-zero compontent of
             //j is component
-
             //call function for every non-zero vector component
+
+            /*
             vector.applySparse((Integer j, Double val) -> {
                 dp.add(val * hashes[idx * vecLen + j]); //gives right vector representing hash; j gives compontent of vector
                 return val;
             });
-*/
-            //if result is larger than zero, set bit to 1
-            if (dp.doubleValue() >= 0) {
+            */
+
+
+            //Calculate dot product between term vector and hash vector (skip 0 values)
+            VectorIterator vIter = vector.nonZeroIterator();
+            double dp = 0;
+            while(vIter.hasNext()) {
+                dp += vIter.next() * hashes[i * vecLen + vIter.index()];
+            }
+
+            //If dot product is larger than zero, set bit to 1
+            if (dp >= 0) {
                 hash.set(i);
             }
         }

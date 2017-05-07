@@ -35,13 +35,13 @@ public class ReaderUtils {
     }
 
     public static Reader getReader(String corpus, Layer layer) throws IOException {
-        //Reader read = new ReaderPolMine(layer);
-        Reader read = new ReaderPolMineMixed(layer);
+        //Reader read = new ReaderPolMineXML(layer);
+        Reader read = new ReaderPolMineCoNLLXML(layer);
         if (corpus.equalsIgnoreCase("taz")) {
             read = new ReaderTaz(layer);
         } else if (corpus.equalsIgnoreCase("PolMine")) {
-            //read = new ReaderPolMine(layer);
-            read = new ReaderPolMineMixed(layer);
+            //read = new ReaderPolMineXML(layer);
+            read = new ReaderPolMineCoNLLXML(layer);
         } else {
             System.err.println("Provide a corpus name, choose between PolMine and taz.");
         }

@@ -20,7 +20,7 @@ import org.la4j.iterator.VectorIterator;
 import org.la4j.vector.SparseVector;
 
 /**
- * Create a term-document and tf.idf matrix. All files and the vocabulary
+ * Create a term-document and tf-idf matrix. All files and the vocabulary
  * extracted from the them are associated with indices that can be used to
  * construct the term-document matrix, the rows referring to the document
  * indices and the columns to the token indices.
@@ -35,8 +35,7 @@ public class TermDocumentMatrix {
 
     private static SparseMatrix counts;
 
-    public TermDocumentMatrix(BiMap<String, Integer> documentIndices,
-                              BiMap<String, Integer> tokenIndices, Set<Integer> mostFrequent) {
+    public TermDocumentMatrix(BiMap<String, Integer> documentIndices, BiMap<String, Integer> tokenIndices) {
         this.documentIndices = documentIndices;
         this.tokenIndices = tokenIndices;
         counts = CRSMatrix.zero(documentIndices.size(), tokenIndices.size());
@@ -47,6 +46,17 @@ public class TermDocumentMatrix {
      */
     public SparseMatrix counts() {
         return counts;
+    }
+
+    /**
+     * Please use setCounts() only to set a derialized matrix as counts
+     * (needed in, e.g., sharedWords method). Otherwise, calculate counts
+     * from raw data.
+     *
+     * @param m The (deserialized) matrix to be set as counts
+     */
+    public void setCounts(SparseMatrix m) {
+        this.counts = m;
     }
 
     /**
@@ -83,7 +93,7 @@ public class TermDocumentMatrix {
     }
 
     /**
-     * Turn the raw frequency matrix into a tf.idf matrix.
+     * Turn the raw frequency matrix into a tf-idf matrix.
      *
      * @param documentFrequencies The document frequencies of all terms
      */
@@ -106,7 +116,7 @@ public class TermDocumentMatrix {
     }
 
     /**
-     * Get n highest tf.idf values from document.
+     * Get n highest tf-idf values from document.
      *
      * @param document The document vector
      * @param n        The number of most relevant terms
@@ -191,7 +201,7 @@ public class TermDocumentMatrix {
         return shared;
     }
     
-    public TIntSet partiallySharedTerms(TIntList cluster,double ratio) {
+    public TIntSet partiallySharedTerms(TIntList cluster, double ratio) {
         TIntSet partShared = new TIntHashSet();        
         TIntList terms = new TIntArrayList();
         TIntList freqs = new TIntArrayList();

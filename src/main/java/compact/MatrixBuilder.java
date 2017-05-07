@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Construct a term-document and tf.idf matrix and svd matrices from given
+ * Construct a term-document and tf-idf matrix and svd matrices from given
  * corpus. First, read the data immediately excluding stopwords, then extract
  * the vocabulary as lemmas or tokens to create matrices of the input documents.
  *
@@ -19,7 +19,7 @@ import java.util.Set;
  */
 public class MatrixBuilder {
 
-    private static final Layer LAYER = Layer.TOKEN;  //TOKEN or LEMMA
+    private static final Layer LAYER = Layer.LEMMA;  //TOKEN or LEMMA
 
     private static final int STOPWORD_LIST_SIZE = 400;//150;
 
@@ -61,8 +61,8 @@ public class MatrixBuilder {
         Reader read = getReader(corpus, LAYER);
         List<File> files = getFiles(corpus, directory, fileExtension);
 
-        Set<Integer> mostFrequent = mostFrequentTokens(vocabulary.tokenCounts(), STOPWORD_LIST_SIZE);
-        TermDocumentMatrix tdm = new TermDocumentMatrix(vocabulary.documentIndices(), vocabulary.tokenIndices(), mostFrequent);
+        //Set<Integer> mostFrequent = mostFrequentTokens(vocabulary.tokenCounts(), STOPWORD_LIST_SIZE);
+        TermDocumentMatrix tdm = new TermDocumentMatrix(vocabulary.documentIndices(), vocabulary.tokenIndices());
 
         int filesDone = 0;
         for (File file : files) {
@@ -72,11 +72,11 @@ public class MatrixBuilder {
             for (int i = 0; i < read.getSectionIDs().size(); i++) {
                 tdm.processSection(read.getSectionIDs().get(i), read.getContent().get(i));
             }
-            System.out.println(++filesDone);
+            System.err.println(++filesDone);
         }
 
-        // Transform term-document matrix into tf.idf matrix
-        System.err.println("Calculating tf.idf matrix...");
+        // Transform term-document matrix into tf-idf matrix
+        System.err.println("Calculating tf-idf matrix...");
         tdm.tfIdf(vocabulary.documentFrequencies());
 
         return tdm;

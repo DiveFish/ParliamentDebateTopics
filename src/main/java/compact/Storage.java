@@ -13,6 +13,7 @@ public class Storage {
 
     public Storage(String storageDirectory) {
         this.storageDirectory = storageDirectory;
+        info = new StorageInformation();
     }
 
     public void serialize() {
@@ -22,8 +23,9 @@ public class Storage {
             os.writeObject(info);
             os.close();
             fileOut.close();
-            System.out.printf("Serialized data is saved in %sstorageInfo.ser", storageDirectory);
+            System.err.printf("Serialized data is saved in %sstorageInfo.ser\n", storageDirectory);
         } catch (IOException e) {
+            System.err.println("StorageDirectory not found");
             e.printStackTrace();
         }
     }
@@ -39,12 +41,12 @@ public class Storage {
             e.printStackTrace();
             return;
         } catch (ClassNotFoundException c) {
-            System.out.println("StorageInformation class not found");
+            System.err.println("StorageInformation class not found");
             c.printStackTrace();
             return;
         }
 
-        System.out.println("Deserializing StorageInformation...");
+        System.err.println("Deserializing StorageInformation...");
     }
 
     public StorageInformation getStorageInfo() {

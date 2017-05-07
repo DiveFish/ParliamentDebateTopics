@@ -136,7 +136,7 @@ public class KMeansClustering {
                 adjustedCentroids.add(SparseVector.zero(vector_length));
             }
 
-            System.err.println("iteration...");
+            System.err.println("Iteration...");
 
             // Assign vectors to their closest centroid
             for (int row = 0; row < num_of_docs; row++) {
