@@ -111,15 +111,15 @@ public class KMeansClustering {
             throw new IOException("Trying to extract more clusters than matrix has elements");
         }
 
-        int vector_length = documentVectors.columns();  //vocab size
-        int num_of_docs = documentVectors.rows();
+        int vectorLength = documentVectors.columns();  //vocab size
+        int numOfDocs = documentVectors.rows();
 
         normalizeDocumentVectors(documentVectors);
 
         // Choose random centroids from document vectors
         Set<Integer> seedDocs = new HashSet<>();
         while (seedDocs.size() < numOfClusters) {
-            seedDocs.add(this.random.nextInt(num_of_docs));
+            seedDocs.add(this.random.nextInt(numOfDocs));
         }
 
         List<Vector> centroids = new ArrayList<>();
@@ -133,13 +133,13 @@ public class KMeansClustering {
             int[] numOfClusterElements = new int[numOfClusters];
             List<Vector> adjustedCentroids = new ArrayList<>();
             for (int i = 0; i < numOfClusters; i++) {
-                adjustedCentroids.add(SparseVector.zero(vector_length));
+                adjustedCentroids.add(SparseVector.zero(vectorLength));
             }
 
             System.err.println("Iteration...");
 
             // Assign vectors to their closest centroid
-            for (int row = 0; row < num_of_docs; row++) {
+            for (int row = 0; row < numOfDocs; row++) {
 
                 double maximum = -Double.MAX_VALUE;
                 int idx = -1;

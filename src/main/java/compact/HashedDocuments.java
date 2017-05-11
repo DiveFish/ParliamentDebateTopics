@@ -21,21 +21,29 @@ import java.util.Optional;
 public class HashedDocuments implements Serializable {
     private static final long serialVersionUID = 2L;
 
-    private BiMap<String, Integer> tokenIndices;
+    private BiMap<String, Integer> documentIndices;
     private List<BitSet> documentHashes;
     private int hashLength;
 
-    public HashedDocuments(BiMap<String, Integer> tokenIndices, List<BitSet> documentHashes, int hashLength) {
-        Preconditions.checkNotNull(tokenIndices);
+    public HashedDocuments(BiMap<String, Integer> documentIndices, List<BitSet> documentHashes, int hashLength) {
+        Preconditions.checkNotNull(documentIndices);
         Preconditions.checkNotNull(documentHashes);
 
-        this.tokenIndices = tokenIndices;
+        this.documentIndices = documentIndices;
         this.documentHashes = documentHashes;
         this.hashLength = hashLength;
     }
 
+    public List<BitSet> getDocumentHashes() {
+        return documentHashes;
+    }
+
+    public int getHashLength() {
+        return hashLength;
+    }
+
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        tokenIndices = (BiMap<String, Integer>) in.readObject();
+        documentIndices = (BiMap<String, Integer>) in.readObject();
         List<long[]> rawBitsets = (List<long[]>) in.readObject();
         documentHashes = new ArrayList<>(rawBitsets.size());
 
@@ -46,10 +54,10 @@ public class HashedDocuments implements Serializable {
         hashLength = in.readInt();
     }
 
-    public Optional<List<DocumentDistance>> similar(String term, int n) {
-        Preconditions.checkNotNull(term);
+    public Optional<List<DocumentDistance>> similar(String docId, int n) {
+        Preconditions.checkNotNull(docId);
 
-        Integer tokenIdx = tokenIndices.get(term);
+        Integer tokenIdx = documentIndices.get(docId);
         if (tokenIdx == null) {
             return Optional.empty();
         }
@@ -64,10 +72,10 @@ public class HashedDocuments implements Serializable {
 
             double distance = (double) BitSet.xorCount(tokenHash, documentHashes.get(i)) / hashLength;
 
-            //DokumentSimilarity
+            //DocumentSimilarity
             //number of documents are the columns here, would be number of words for PDT
             //some words will only have few documents in which they occur
-            DocumentDistance documentDistance = new DocumentDistance(tokenIndices.inverse().get(i), distance);
+            DocumentDistance documentDistance = new DocumentDistance(documentIndices.inverse().get(i), distance);
             bestN.add(documentDistance);
         }
 
@@ -80,7 +88,7 @@ public class HashedDocuments implements Serializable {
             rawBitsets.add(tokenHash.bits);
         }
 
-        out.writeObject(tokenIndices);
+        out.writeObject(documentIndices);
         out.writeObject(rawBitsets);
         out.writeInt(hashLength);
     }

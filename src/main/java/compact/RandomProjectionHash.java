@@ -19,6 +19,7 @@ public class RandomProjectionHash {
 
     private final double[] hashes;  //a 1D-array containing all randomly generated hash vectors
 
+    // Number of bits defines how many hash vectors are created
     public RandomProjectionHash(RandomGenerator generator, int vectorLength, int bits) {
         this.bits = bits;
         this.hashes = new double[bits * vectorLength];

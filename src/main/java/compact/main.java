@@ -1,9 +1,12 @@
 package compact;
 
+import com.carrotsearch.hppc.BitSet;
 import com.google.common.collect.BiMap;
 import gnu.trove.list.TIntList;
 import gnu.trove.set.TIntSet;
+import org.apache.commons.math3.random.MersenneTwister;
 import org.la4j.Vector;
+import org.la4j.vector.SparseVector;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,7 +17,9 @@ import java.util.*;
  * @author Patricia Fischer
  */
 public class main {
-    private static final int NUM_OF_CLUSTERS = 700; //800 //3000;
+    private static final int NUM_OF_CLUSTERS = 150; //800 //3000;
+
+    private static final int NUM_OF_BITS = 1200;
 
     private static double ratio = 0.3;
 
@@ -23,17 +28,17 @@ public class main {
         String corpus;
         File directory;
         String storageDirectory;
-        storageDirectory = "/home/patricia/Dokumente/Bachelorarbeit/Results/taz/";
+        storageDirectory = "/home/patricia/Dokumente/Bachelorarbeit/Results/PolMine/";
         
-        corpus = "taz";
+        //corpus = "taz";
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz-sample/");  // 12 files -> 677 sections
-        directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz/");
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz/");
 
-        //corpus = "PolMine";
+        corpus = "PolMine";
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized/"); // 984 debates -> 215.080 sections
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized-sample/"); // 12 debates -> 2733 sections
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/test/");
-        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-conll-xml/");
+        directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-conll-xml/");
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-conll-xml-sample/");
 
         if (args.length != 3) {
@@ -52,21 +57,8 @@ public class main {
         //-->*/
 
         //tdm.svd();
-/*
-        RandomProjectionHash rph = new RandomProjectionHash(new MersenneTwister(42), vocabulary.tokenIndices().size(), 1024);
 
-        System.out.println("_________________________");
-        System.out.printf("Hashing %d vectors...\n", vocabulary.tokenIndices().size());
-        System.out.println("_________________________");
-        List<BitSet> hashes = new ArrayList<>();
-        for (int i = 0; i < tdm.counts().rows(); i++) {
-            SparseVector row = tdm.counts().getRow(i).toSparseVector();
-            BitSet hash = rph.hashVector(row);
-            hashes.add(hash);
-        }
 
-        HashedDocuments hashedDocuments = new HashedDocuments(vocabulary.tokenIndices(), hashes, 1024);
-*/
 
         ///*-->
 
@@ -133,6 +125,9 @@ public class main {
         }
 
 
+
+        //Serialize/deserialize
+/*
         List<MatrixValue> countValues = new ArrayList<>();
         List<List<MatrixValue>> centroidValues = new ArrayList<>();
         StorageInformation info = new StorageInformation(countValues, tdm.counts().rows(), tdm.counts().columns(),
@@ -152,8 +147,43 @@ public class main {
         System.out.println("CENTROIDS   Rows/#centroids: "+info.getCentroids().size()+", columns/#words: "+info.getCentroids().get(0).length());
         System.out.println("First doc date: "+info.getDocumentDates().get(0));
         System.out.println("First doc filename: "+info.getDocumentIndices().inverse().get(0));
+*/
 
 
+
+        System.out.println("_________________________");
+        System.out.printf("Hashing %d vectors...\n", vocabulary.documentIndices().size());
+        System.out.println("_________________________");
+        RandomProjectionHash rph = new RandomProjectionHash(new MersenneTwister(42), vocabulary.tokenIndices().size(), NUM_OF_BITS); //bits: 1024
+        List<BitSet> hashes = new ArrayList<>();
+        for (int i = 0; i < tdm.counts().rows(); i++) {
+            SparseVector row = tdm.counts().getRow(i).toSparseVector();
+            BitSet hash = rph.hashVector(row);
+            hashes.add(hash);
+        }
+        HashedDocuments hashedDocuments = new HashedDocuments(vocabulary.documentIndices(), hashes, NUM_OF_BITS);
+
+        KMeansHashClustering hashClustering = new KMeansHashClustering(NUM_OF_CLUSTERS, hashedDocuments, new Random());
+        List<BitSet> bitCentroids = hashClustering.centroids();
+
+        List<TIntList> bitClusters = hashClustering.clusters(bitCentroids);
+        for (TIntList cluster : bitClusters) {
+            if (cluster.isEmpty()) {
+                System.out.println("Empty cluster");
+            }
+            else {
+                // Earliest doc in cluster
+                System.out.println(documentIndicesInverted.get(kmc.earliestDoc(vocabulary.documentDates(), cluster)));
+
+                TIntSet sharedTerms = tdm.partiallySharedTerms(cluster, ratio);
+
+                System.out.println(cluster);
+                for (Integer c : cluster.toArray()) {
+                    tdm.nMostRelevantTerms(tdm.counts().getRow(c).toSparseVector(), 10, vocabulary.tokenIndices(), sharedTerms);
+                }
+            }
+            System.out.println();
+        }
 
         //-->*/
 
