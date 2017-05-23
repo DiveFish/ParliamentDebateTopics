@@ -15,8 +15,8 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 /**
- * Read CONLL files from taz corpus. Save article IDs and article content
- * (words and their respective frequency). Do not include stopwords.
+ * Read CONLL files from taz corpus. Calculate number of
+ * words and sentences.
  *
  * @author Daniël de Kok and Patricia Fischer
  */

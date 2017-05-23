@@ -33,51 +33,57 @@ import org.apache.commons.math3.util.Pair;
  * @author Daniël de Kok and Patricia Fischer
  */
 public class ReaderTaz implements Reader {
-    
+
     private final Layer layer;
-    
-    private final Map<String, List<String>> newsMetadata;  // section ID <-> date
-    
+
+    private final Map<String, List<String>> newsMetadata;  // section ID <-> date, sentence count, word count
+
     private final Set<String> stopwords;
-    
-    private static List<Map<String, Integer>> fileContent;  // content of all sections, each section one HashMap
-    
-    private static List<String> articleIds; // IDs of all sections/files
+
+    private final List<Map<String, Integer>> fileContent;  // content of all sections, each section one HashMap
+
+    private final List<String> sectionIds; // IDs of all sections
+
+    private static final Pattern P_ID = Pattern.compile("nr:([0-9]+)");
 
     private static final Pattern P_DATE = Pattern.compile("dat:([0-9]){2}\\.([0-9]){2}\\.([0-9]){2}");
-    
-    
+
+
     public ReaderTaz(Layer layer) throws IOException {
         this.layer = layer;
         newsMetadata = new HashMap();
+        fileContent = new ArrayList();
+        sectionIds = new ArrayList();
         this.stopwords = Stopwords.stopwords();
     }
-    
+
     /**
-     * 
+     *
      * @param conllFile The article file in CONLL format
-     * @throws IOException 
+     * @throws IOException
      */
     @Override
     public void processFile(File conllFile) throws IOException {
-        fileContent = new ArrayList();
-        fileContent.add(new HashMap());
-
         String fileId = conllFile.getName();
-        String newsDate = "";
 
-        articleIds = new ArrayList<>();
-        articleIds.add(fileId);
+        int sentenceCount = 0;
+        int tokenCount = 0;
+
+        String previousSectionId = "";
+        boolean firstIter = true;
+
+        int sectionIdx = 0;
 
         //System.err.println(String.format("Processing file %s", fileId));
-        
+
         try (CONLLReader conllReader = new CONLLReader(new BufferedReader(new InputStreamReader(new GZIPInputStream(
                 new FileInputStream(conllFile)))))) {
             for (Sentence sentence = conllReader.readSentence(); sentence != null; sentence = conllReader.readSentence()) {
                 List<Token> sent = sentence.getTokens();
-                
+
                 String feats = sent.get(0).getFeatures().or("_");
 
+                String newsDate = "";
                 Matcher md = P_DATE.matcher(feats);
                 if (md.find()) {
                     newsDate =  md.group().substring(4);   //Find regex "dat: num{2}.num{2}.num{2}" in features
@@ -86,41 +92,61 @@ public class ReaderTaz implements Reader {
                     System.err.printf("No date found in article %s", fileId);
                 }
 
-                Map<String, Integer> wordFrequencies = fileContent.get(articleIds.indexOf(fileId));
-                
+                Matcher mID = P_ID.matcher(feats);
+                int tokenId = 0;
+                if (mID.find()) {
+                    tokenId = Integer.parseInt(mID.group(0).substring(3));   //Find regex "nr:[0-9]+" in features
+                }
+                else {
+                    System.err.printf("No ID found in article %s", fileId);
+                }
+                String sectionId = fileId + "_" + tokenId;
+
+                // At end of previous section, add counts to metadata
+                if (!previousSectionId.equals(sectionId) && !firstIter) {
+                    newsMetadata.get(previousSectionId).addAll(Arrays.asList(Integer.toString(sentenceCount), Integer.toString(tokenCount)));
+                }
+
+                // Encountered new section
+                if (!sectionIds.contains(sectionId)) {
+                    sectionIds.add(sectionId);
+                    sectionIdx = sectionIds.size()-1;
+                    fileContent.add(new HashMap());
+
+                    List<String> metadata = new ArrayList();
+                    metadata.add(newsDate);
+                    newsMetadata.putIfAbsent(sectionId, metadata);
+
+                    sentenceCount = 0;
+                    tokenCount = 0;
+                    previousSectionId = sectionId.toString();
+
+                    firstIter = false;
+                }
+                sentenceCount++;
+                tokenCount += sent.size();
+
+                Map<String, Integer> wordFrequencies = fileContent.get(sectionIdx);
+
                 for (Token token : sent) {
                     String value = layer == Layer.LEMMA ?
-                        token.getLemma().or("_") :
-                        token.getForm().or("_");
+                            token.getLemma().or("_") :
+                            token.getForm().or("_");
                     if (stopwords.contains(value.toLowerCase())) {
                         continue;
                     }
-                    
+
                     // Exclude all words except proper nouns or proper and common nouns
                     //if (!token.getPosTag().or("_").equals("CARD")) {
-                    //if (!token.getPosTag().or("_").equals("TRUNC")) {    
-                    //if (!token.getPosTag().or("_").equals("VVFIN")) {    
+                    //if (!token.getPosTag().or("_").equals("TRUNC")) {
+                    //if (!token.getPosTag().or("_").equals("VVFIN")) {
                     //if (!token.getPosTag().or("_").equals("VVPP")) {
                     //if (!token.getPosTag().or("_").equals("ADJA")||token.getPosTag().or("_").equals("ADV")||token.getPosTag().or("_").equals("ADJD")) {
                     //if (!token.getPosTag().or("_").equals("NE")) {
-                    //if (!(token.getPosTag().or("_").equals("NN")||token.getPosTag().or("_").equals("NE"))) {
-
-                    // Other
-                    //if (!token.getPosTag().or("_").equals("CARD") || token.getPosTag().or("_").equals("FM")
-                    //        || token.getPosTag().or("_").equals("XY")) {
-                    // Verbal
-                    //if (!token.getPosTag().or("_").equals("VVFIN") || token.getPosTag().or("_").equals("VVINF")
-                    //        || token.getPosTag().or("_").equals("VVIZU")|| token.getPosTag().or("_").equals("VVPP")) {
-                    // Adjectival/adverbial
-                    //if (!token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD")||token.getPosTag().or("_").equals("ADV")) {
-                    // Nominal
-                    //if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE")||token.getPosTag().or("_").equals("TRUNC"))) {
-                    //COMBINED: NN, NE, TRUNC, ADJA, ADJD, CARD
-                    if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE") || token.getPosTag().or("_").equals("TRUNC") ||
-                            token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD") || token.getPosTag().or("_").equals("CARD"))) {
+                    if (!(token.getPosTag().or("_").equals("NN")||token.getPosTag().or("_").equals("NE"))) {
                         continue;
                     }
-                    
+
                     if (!wordFrequencies.containsKey(value)) {
                         wordFrequencies.putIfAbsent(value, 1);
                     }
@@ -129,25 +155,38 @@ public class ReaderTaz implements Reader {
                     }
                 }
             }
-            newsMetadata.putIfAbsent(fileId, Arrays.asList(newsDate));
+            // Add counts of last section
+            newsMetadata.get(previousSectionId).addAll(Arrays.asList(Integer.toString(sentenceCount),Integer.toString(tokenCount)));
+
+            // Remove sections which consist of less than 10 sentences
+            int minNumOfSents = 10;
+            List<String> sectionIdsAll = new ArrayList();
+            sectionIdsAll.addAll(sectionIds);
+            for (String sectionId : sectionIdsAll) {
+                if (Integer.parseInt(newsMetadata.get(sectionId).get(1)) < minNumOfSents) {
+                    newsMetadata.remove(sectionId);
+                    fileContent.remove(sectionIds.indexOf(sectionId));
+                    sectionIds.remove(sectionId);
+                }
+            }
         }
     }
-    
+
     @Override
     public List<Map<String, Integer>> getContent() {
         return fileContent;
     }
-    
+
     @Override
     public List<String> getSectionIDs() {
-        return articleIds;
+        return sectionIds;
     }
-    
+
     @Override
     public Map<String, List<String>> getMetadata() {
         return newsMetadata;
     }
-    
+
     /**
      * Find the earliest document in the cluster. Sort documents by date and
      * return doc id with earliest date.
@@ -164,41 +203,41 @@ public class ReaderTaz implements Reader {
             }
             return -cmp;
         });
-        
+
         Map<Integer, Date> dateIds = dateByID(documentIndices);
-        
+
         for (int i = 0; i < dateIds.size(); i++) {
             sortedDates.add(new Pair<>(i, dateIds.get(i)));
         }
         System.out.printf("Date: %s, doc %s", sortedDates.first().getValue(), sortedDates.first().getKey());
-       return sortedDates.first().getKey();
-   }
-   
+        return sortedDates.first().getKey();
+    }
+
     /**
      * Map each date to the document index. Original format is "file ID - doc idx"
      * and "file ID - date string", should be "doc idx - date"
-     * 
+     *
      * @param documentIndices The document indices
      * @return The dates by document indices
      */
-   private Map<Integer, Date> dateByID(BiMap<String, Integer> documentIndices) {
-       
-       BiMap<Integer, String> docsByIdx = documentIndices.inverse();
-       Map<Integer, Date> dateIDs = new HashMap();
-       
-       for (int i = 0; i < docsByIdx.size(); i++) {
-           dateIDs.putIfAbsent(i, stringToDate(newsMetadata.get(docsByIdx.get(i)).get(0)));  // get date from metadata
-       }
-       return dateIDs;
-   }
-   
-   /**
-    * Convert string to date.
-    * 
-    * @param dateString The string to be converted
-    * @return The date
-    */
-   private Date stringToDate(String dateString) {
+    private Map<Integer, Date> dateByID(BiMap<String, Integer> documentIndices) {
+
+        BiMap<Integer, String> docsByIdx = documentIndices.inverse();
+        Map<Integer, Date> dateIDs = new HashMap();
+
+        for (int i = 0; i < docsByIdx.size(); i++) {
+            dateIDs.putIfAbsent(i, stringToDate(newsMetadata.get(docsByIdx.get(i)).get(0)));  // get date from metadata
+        }
+        return dateIDs;
+    }
+
+    /**
+     * Convert string to date.
+     *
+     * @param dateString The string to be converted
+     * @return The date
+     */
+    private Date stringToDate(String dateString) {
         SimpleDateFormat formatter = new SimpleDateFormat("dd.MM.yyyy");
         Date date = new Date();
         try {
@@ -209,5 +248,5 @@ public class ReaderTaz implements Reader {
             System.err.println("Cannot parse date");
         }
         return date;
-   }
+    }
 }

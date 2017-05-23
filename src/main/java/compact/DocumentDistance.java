@@ -1,6 +1,8 @@
 package compact;
 
 /**
+ * Sorting document hash vectors by document ID.
+ *
  * @author Daniël de Kok and Patricia Fischer
  */
 public class DocumentDistance implements Comparable<DocumentDistance> {

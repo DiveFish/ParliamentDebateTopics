@@ -41,21 +41,23 @@ public class ReaderPolMineCoNLLXML implements Reader {
 
     private final Layer layer;
 
-    private final Map<String, List<String>> debateMetadata;  // section/file ID <-> date
+    private final Map<String, List<String>> debateMetadata;  // section/file ID <-> date, sentence count, token count
 
     private final SAXParserFactory parserFactory;
 
     private final Set<String> stopwords;
 
-    private static List<String> debateIds;
+    private final List<String> debateIds;
 
-    private static List<Map<String, Integer>> fileContent;  // content of all sections, each section one HashMap of tokens and their frequencies
+    private final List<Map<String, Integer>> fileContent;  // content of all sections, each section one HashMap of tokens and their frequencies
 
     private static String date;
 
     public ReaderPolMineCoNLLXML(Layer layer) throws IOException {
         this.layer = layer;
         debateMetadata = new HashMap();
+        debateIds = new ArrayList();
+        fileContent = new ArrayList();
         this.stopwords = Stopwords.stopwords();
 
         parserFactory = SAXParserFactory.newInstance();
@@ -71,15 +73,15 @@ public class ReaderPolMineCoNLLXML implements Reader {
      */
     @Override
     public void processFile(File conllFile) throws IOException {
-        fileContent = new ArrayList();
         fileContent.add(new HashMap<>());
 
         String fileId = conllFile.getName();
-
-        debateIds = new ArrayList<>();
         debateIds.add(fileId);
+        int debateIdx = debateIds.size()-1;
+        Map<String, Integer> wordFrequencies = fileContent.get(debateIdx);
 
-        Map<String, Integer> wordFrequencies = fileContent.get(debateIds.indexOf(fileId));
+        int sentenceCount = 0;
+        int tokenCount = 0;
 
         //System.err.println(String.format("Processing file %s", fileId));
 
@@ -87,6 +89,8 @@ public class ReaderPolMineCoNLLXML implements Reader {
                 new FileInputStream(conllFile)))))) {
             for (Sentence sentence = conllReader.readSentence(); sentence != null; sentence = conllReader.readSentence()) {
                 List<Token> sent = sentence.getTokens();
+                sentenceCount++;
+                tokenCount += sent.size();
 
                 for (Token token : sent) {
                     String value = layer == Layer.LEMMA ?
@@ -110,10 +114,10 @@ public class ReaderPolMineCoNLLXML implements Reader {
                     // Adjectival/adverbial
                     //if (!token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD")||token.getPosTag().or("_").equals("ADV")) {
                     // Nominal
-                    //if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE")||token.getPosTag().or("_").equals("TRUNC"))) {
+                    if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE")||token.getPosTag().or("_").equals("TRUNC"))) {
                     //COMBINED: NN, NE, TRUNC, ADJA, ADJD, CARD
-                    if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE") || token.getPosTag().or("_").equals("TRUNC") ||
-                            token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD") || token.getPosTag().or("_").equals("CARD"))) {
+                    //if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE") || token.getPosTag().or("_").equals("TRUNC") ||
+                    //        token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD") || token.getPosTag().or("_").equals("CARD"))) {
                             continue;
                     }
 
@@ -126,8 +130,9 @@ public class ReaderPolMineCoNLLXML implements Reader {
                 }
             }
             readDate(conllFile);
-            debateMetadata.putIfAbsent(fileId, Arrays.asList(date));
-            fileContent.add(wordFrequencies);
+            List<String> metadata = new ArrayList();
+            metadata.addAll(Arrays.asList(date, Integer.toString(sentenceCount), Integer.toString(tokenCount)));
+            debateMetadata.putIfAbsent(fileId, metadata);
         }
     }
 

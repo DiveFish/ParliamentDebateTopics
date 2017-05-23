@@ -1,6 +1,8 @@
 package compact;
 
+import gnu.trove.list.TDoubleList;
 import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.io.IOException;
@@ -129,6 +131,7 @@ public class KMeansClustering {
 
         for (int iter = 0; iter < 3; iter++) {
             double objective = 0;
+            TDoubleList cosineSimilarities = new TDoubleArrayList();
 
             int[] numOfClusterElements = new int[numOfClusters];
             List<Vector> adjustedCentroids = new ArrayList<>();
@@ -154,6 +157,7 @@ public class KMeansClustering {
                 adjustedCentroids.set(idx, adjustedCentroids.get(idx).add(documentVectors.getRow(row)));
                 numOfClusterElements[idx]++;
                 objective += maximum;
+                cosineSimilarities.add(maximum);
             }
 
             System.err.println("Recomputing centroids...");
@@ -166,7 +170,14 @@ public class KMeansClustering {
 
             centroids = adjustedCentroids;
             cosine = objective / documentVectors.rows();
-            System.err.printf("Average cosine similarity: %s%n", objective / documentVectors.rows());
+            System.out.printf("Average cosine similarity %s: %s%n", iter+1, cosine);
+            if (iter == 2) {
+                System.out.println("Cluster cosine similarities:");
+                for (int i = 0; i < cosineSimilarities.size(); i++) {
+                    System.out.println(cosineSimilarities.get(i));
+                }
+                System.out.println();
+            }
         }
 
         return centroids;
@@ -183,29 +194,4 @@ public class KMeansClustering {
             documentVectors.setRow(i, doc.divide(norm(doc)));
         }
     }
-    
-    /**
-     * Find the earliest document in the cluster. Sort documents by date and
-     * return doc id with earliest date.
-     *
-     * @param dateIds The dates by document indices
-     * @param cluster The cluster of documents
-     * @return The doc id of earliest date in cluster
-     */
-    public int earliestDoc(Map<Integer, Date> dateIds, TIntList cluster) {
-        SortedSet<Pair<Integer, Date>> sortedDates = new TreeSet<>((o1, o2) -> {
-            int cmp = o1.getValue().compareTo(o2.getValue());
-            if (cmp == 0) {
-                return o1.getKey().compareTo(o2.getKey());
-            }
-            return cmp;
-        });
-
-        for (int i = 0; i < cluster.size(); i++) {
-            sortedDates.add(new Pair<>(cluster.get(i), dateIds.get(cluster.get(i))));
-        }
-        
-        System.out.printf("Earliest document: %s, date: %s\n", sortedDates.first().getKey(), sortedDates.first().getValue());
-        return sortedDates.first().getKey();
-   }
 }

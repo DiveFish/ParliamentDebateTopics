@@ -1,18 +1,19 @@
 package compact;
 
 import com.carrotsearch.hppc.BitSet;
+import gnu.trove.list.TDoubleList;
 import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import org.apache.commons.math3.util.Pair;
-import org.la4j.iterator.MatrixIterator;
-import org.la4j.iterator.VectorIterator;
-import org.la4j.matrix.SparseMatrix;
 
 import java.io.IOException;
 import java.util.*;
 
 /**
- * Created by Patricia Fischer on 9/05/17.
+ * K-means clustering for bit vectors.
+ *
+ * @author Patricia Fischer
  */
 public class KMeansHashClustering {
 
@@ -95,31 +96,6 @@ public class KMeansHashClustering {
     }
 
     /**
-     * Find the earliest document in the cluster. Sort documents by date and
-     * return doc id with earliest date.
-     *
-     * @param dateIds The dates by document indices
-     * @param cluster The cluster of documents
-     * @return The doc id of earliest date in cluster
-     */
-    public int earliestDoc(Map<Integer, Date> dateIds, TIntList cluster) {
-        SortedSet<Pair<Integer, Date>> sortedDates = new TreeSet<>((o1, o2) -> {
-            int cmp = o1.getValue().compareTo(o2.getValue());
-            if (cmp == 0) {
-                return o1.getKey().compareTo(o2.getKey());
-            }
-            return cmp;
-        });
-
-        for (int i = 0; i < cluster.size(); i++) {
-            sortedDates.add(new Pair<>(cluster.get(i), dateIds.get(cluster.get(i))));
-        }
-
-        System.out.printf("Earliest document: %s, date: %s\n", sortedDates.first().getKey(), sortedDates.first().getValue());
-        return sortedDates.first().getKey();
-    }
-
-    /**
      * Cluster data by k-means clustering. Calculate euclidean distance from all
      * document vectors to all centroids, assign each to their closest centroid.
      * When all documents are assigned to a centroid, readjust centroids.
@@ -156,6 +132,7 @@ public class KMeansHashClustering {
 
         for (int iter = 0; iter < 3; iter++) {
             double objective = 0;
+            TDoubleList hammingDistances = new TDoubleArrayList();
 
             int[] numOfClusterElements = new int[numOfClusters];
             List<int[]> adjustedCentroids = new ArrayList<>();
@@ -175,7 +152,7 @@ public class KMeansHashClustering {
                 // Compute distance between current row and centroids to find closest centroid
                 for (int i = 0; i < centroids.size(); i++) {
 
-                    BitSet hammingBits = bitSetRow;
+                    BitSet hammingBits = (BitSet) bitSetRow.clone();
                     hammingBits.xor(centroids.get(i));
                     double distance = hammingBits.cardinality();
 
@@ -189,14 +166,14 @@ public class KMeansHashClustering {
                 int[] rowBitFreqs = adjustedCentroids.get(idx);
                 // For all set bits (true/1), add 1 to respective adjustedCentroid int[]
                 for (int bitIdx = bitSetRow.nextSetBit(0); bitIdx >= 0; bitIdx = bitSetRow.nextSetBit(bitIdx+1)) {
-                    rowBitFreqs[bitIdx] = rowBitFreqs[bitIdx]+1;
+                    rowBitFreqs[bitIdx]++;
                     if (bitIdx == Integer.MAX_VALUE) {
                         break; // or (i+1) would overflow
                     }
                 }
-                adjustedCentroids.set(idx, rowBitFreqs);
                 numOfClusterElements[idx]++;
                 objective += minimum;
+                hammingDistances.add(minimum);
             }
 
             System.err.println("Recomputing centroids...");
@@ -207,9 +184,9 @@ public class KMeansHashClustering {
                 int clusterElements = numOfClusterElements[i];
                 centroids.set(i, new BitSet(bitSetSize));
                 for (int j = 0; j < adjustedCentroid.length; j++) {
-                    // If bit at position j is more often set than not, set it in centroid
+                    // If bit at position j is more often set to 1 than not, set it in centroid
                     if (clusterElements > 0) {
-                        if (adjustedCentroid[j] >= clusterElements/2) {
+                        if (adjustedCentroid[j] >= clusterElements/2) { //int tieCounter: increase whenever there is a tie; once set bit to 1, other time set bit to 0
                             centroids.get(i).set(j);
                         }
                     }
@@ -218,7 +195,10 @@ public class KMeansHashClustering {
             System.out.println("Centroids\n"+centroids);
 
             hammingDistance = objective / documentHashes.size();
-            System.err.printf("Average hammingDistance: %s%n", hammingDistance);
+            System.out.printf("Average hammingDistance %s: %s%n", iter+1, hammingDistance);
+            if (iter == 2) {
+                System.out.println("Cluster hamming distances:\n"+hammingDistances.toString()+"\n");
+            }
         }
 
         return centroids;

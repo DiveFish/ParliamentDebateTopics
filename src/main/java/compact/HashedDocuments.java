@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Hashed terms is a container of hashed documents, which can be
- * used to find documents that are similar to a particular document.
+ * A container of hashed documents, which can be used to
+ * find documents that are similar to a particular document.
  *
  * @author Daniël de Kok and Patricia Fischer
  */

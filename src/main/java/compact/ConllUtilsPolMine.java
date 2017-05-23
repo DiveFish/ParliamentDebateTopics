@@ -20,7 +20,8 @@ import java.util.zip.GZIPInputStream;
 import org.apache.commons.math3.util.Pair;
 
 /**
- * Read CONLL files from PolMine corpus.
+ * Read CONLL files from PolMine corpus. Calculate number of
+ * words and sentences.
  *
  * @author Daniël de Kok and Patricia Fischer
  */

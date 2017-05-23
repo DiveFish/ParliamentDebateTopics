@@ -5,10 +5,7 @@ import gnu.trove.list.TIntList;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Construct a term-document and tf-idf matrix and svd matrices from given
@@ -41,6 +38,12 @@ public class MatrixBuilder {
             System.err.println(++filesDone);
         }
         vocabulary.extractDocumentDates(read.getMetadata());
+
+        // Sentence and token counts for all sections
+        System.out.println("Sentence count, token count");
+        for (Map.Entry<String, List<String>> entry : read.getMetadata().entrySet()) {
+                System.out.println(entry.getValue().get(1) + ", " + entry.getValue().get(2));
+        }
 
         return vocabulary;
     }

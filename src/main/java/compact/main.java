@@ -12,12 +12,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static compact.ClusterUtils.*;
+
 /**
  *
  * @author Patricia Fischer
  */
 public class main {
-    private static final int NUM_OF_CLUSTERS = 150; //800 //3000;
+    private static final int NUM_OF_CLUSTERS = 60; //800 //3000;
 
     private static final int NUM_OF_BITS = 1200;
 
@@ -28,17 +30,17 @@ public class main {
         String corpus;
         File directory;
         String storageDirectory;
-        storageDirectory = "/home/patricia/Dokumente/Bachelorarbeit/Results/PolMine/";
+        storageDirectory = "/home/patricia/Dokumente/Bachelorarbeit/Results/taz/Samples/";
         
-        //corpus = "taz";
-        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz-sample/");  // 12 files -> 677 sections
+        corpus = "taz";
+        directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz-sample1/");  // 12 files -> 677 sections
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz/");
 
-        corpus = "PolMine";
+        //corpus = "PolMine";
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized/"); // 984 debates -> 215.080 sections
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized-sample/"); // 12 debates -> 2733 sections
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/test/");
-        directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-conll-xml/");
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-conll-xml/");
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-conll-xml-sample/");
 
         if (args.length != 3) {
@@ -75,7 +77,7 @@ public class main {
             }
             else {
                 // Earliest doc in cluster
-                System.out.println(documentIndicesInverted.get(kmc.earliestDoc(vocabulary.documentDates(), cluster)));
+                System.out.println(documentIndicesInverted.get(earliestDoc(vocabulary.documentDates(), cluster)));
 
 
                 ratio = 0.3;
@@ -127,7 +129,7 @@ public class main {
 
 
         //Serialize/deserialize
-/*
+
         List<MatrixValue> countValues = new ArrayList<>();
         List<List<MatrixValue>> centroidValues = new ArrayList<>();
         StorageInformation info = new StorageInformation(countValues, tdm.counts().rows(), tdm.counts().columns(),
@@ -139,6 +141,7 @@ public class main {
         Storage store = new Storage(storageDirectory);
         store.setStorageInfo(info);
         store.serialize();
+        /*
         store.deserialize();
 
         info.serializableToMatrix();
@@ -150,7 +153,7 @@ public class main {
 */
 
 
-
+/*
         System.out.println("_________________________");
         System.out.printf("Hashing %d vectors...\n", vocabulary.documentIndices().size());
         System.out.println("_________________________");
@@ -184,12 +187,12 @@ public class main {
             }
             System.out.println();
         }
-
+*/
         //-->*/
 
 
 /*
-        //Remainder of main() is meant for deserializing information from exisiting storage.ser
+        //Remainder of main() is meant for deserializing information from existing storage.ser
         Storage store = new Storage(storageDirectory);
         store.deserialize();
         StorageInformation info = store.getStorageInfo();

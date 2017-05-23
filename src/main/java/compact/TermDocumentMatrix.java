@@ -109,10 +109,14 @@ public class TermDocumentMatrix {
             if (docFreq > 0 && val > 0) {
                 matIter.set(val * Math.log((double) numOfDocuments / (double) docFreq));
             }
+            /*
             if (j == counts.columns() - 1) {
                 System.out.println(matIter.rowIndex() + 1 + " sections done");
             }
+            */
+
         }
+        System.out.println(counts.rows()+ " sections done");
     }
 
     /**
