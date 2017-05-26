@@ -41,23 +41,21 @@ public class ReaderPolMineCoNLLXML implements Reader {
 
     private final Layer layer;
 
-    private final Map<String, List<String>> debateMetadata;  // section/file ID <-> date, sentence count, token count
+    private static Map<String, List<String>> debateMetadata;  // section/file ID <-> date, sentence count, token count (for ALL files)
 
     private final SAXParserFactory parserFactory;
 
     private final Set<String> stopwords;
 
-    private final List<String> debateIds;
+    private static List<Map<String, Integer>> fileContent;  // content of all sections in ONE file, each section one HashMap of tokens and their frequencies
 
-    private final List<Map<String, Integer>> fileContent;  // content of all sections, each section one HashMap of tokens and their frequencies
+    private static List<String> debateIds;  // IDs of all sections in ONE file
 
     private static String date;
 
     public ReaderPolMineCoNLLXML(Layer layer) throws IOException {
         this.layer = layer;
         debateMetadata = new HashMap();
-        debateIds = new ArrayList();
-        fileContent = new ArrayList();
         this.stopwords = Stopwords.stopwords();
 
         parserFactory = SAXParserFactory.newInstance();
@@ -73,11 +71,13 @@ public class ReaderPolMineCoNLLXML implements Reader {
      */
     @Override
     public void processFile(File conllFile) throws IOException {
-        fileContent.add(new HashMap<>());
-
+        debateIds = new ArrayList();
         String fileId = conllFile.getName();
         debateIds.add(fileId);
         int debateIdx = debateIds.size()-1;
+
+        fileContent = new ArrayList();
+        fileContent.add(new HashMap<>());
         Map<String, Integer> wordFrequencies = fileContent.get(debateIdx);
 
         int sentenceCount = 0;
@@ -111,10 +111,10 @@ public class ReaderPolMineCoNLLXML implements Reader {
                     // Verbal
                     //if (!token.getPosTag().or("_").equals("VVFIN") || token.getPosTag().or("_").equals("VVINF")
                     //        || token.getPosTag().or("_").equals("VVIZU")|| token.getPosTag().or("_").equals("VVPP")) {
-                    // Adjectival/adverbial
-                    //if (!token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD")||token.getPosTag().or("_").equals("ADV")) {
+                    // Adjectival
+                    if (!token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD")) {
                     // Nominal
-                    if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE")||token.getPosTag().or("_").equals("TRUNC"))) {
+                    //if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE")||token.getPosTag().or("_").equals("TRUNC"))) {
                     //COMBINED: NN, NE, TRUNC, ADJA, ADJD, CARD
                     //if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE") || token.getPosTag().or("_").equals("TRUNC") ||
                     //        token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD") || token.getPosTag().or("_").equals("CARD"))) {

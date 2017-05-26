@@ -36,13 +36,13 @@ public class ReaderTaz implements Reader {
 
     private final Layer layer;
 
-    private final Map<String, List<String>> newsMetadata;  // section ID <-> date, sentence count, word count
+    private static Map<String, List<String>> newsMetadata;  // section ID <-> date, sentence count, word count (for ALL files)
 
     private final Set<String> stopwords;
 
-    private final List<Map<String, Integer>> fileContent;  // content of all sections, each section one HashMap
+    private static List<Map<String, Integer>> fileContent;  // content of all sections in ONE file, each section one HashMap
 
-    private final List<String> sectionIds; // IDs of all sections
+    private static List<String> sectionIds; // IDs of all sections in ONE file
 
     private static final Pattern P_ID = Pattern.compile("nr:([0-9]+)");
 
@@ -52,18 +52,123 @@ public class ReaderTaz implements Reader {
     public ReaderTaz(Layer layer) throws IOException {
         this.layer = layer;
         newsMetadata = new HashMap();
-        fileContent = new ArrayList();
-        sectionIds = new ArrayList();
         this.stopwords = Stopwords.stopwords();
     }
 
     /**
+     * Process file contents, save id and content (and once the date), check the size of the content
+     * -> further process only long-enough sections
      *
      * @param conllFile The article file in CONLL format
      * @throws IOException
      */
     @Override
     public void processFile(File conllFile) throws IOException {
+        fileContent = new ArrayList();
+        sectionIds = new ArrayList();
+
+        String fileId = conllFile.getName();
+
+        int sentenceCount = 0;
+        int tokenCount = 0;
+
+        String previousSectionId = "";
+        boolean firstIter = true;
+
+        int sectionIdx = 0;
+
+        //System.err.println(String.format("Processing file %s", fileId));
+
+        try (CONLLReader conllReader = new CONLLReader(new BufferedReader(new InputStreamReader(new GZIPInputStream(
+                new FileInputStream(conllFile)))))) {
+            for (Sentence sentence = conllReader.readSentence(); sentence != null; sentence = conllReader.readSentence()) {
+                List<Token> sent = sentence.getTokens();
+
+                String feats = sent.get(0).getFeatures().or("_");
+
+                String newsDate = "";
+                Matcher md = P_DATE.matcher(feats);
+                if (md.find()) {
+                    newsDate =  md.group().substring(4);   //Find regex "dat: num{2}.num{2}.num{2}" in features
+                }
+                else {
+                    System.err.printf("No date found in article %s", fileId);
+                }
+
+                Matcher mID = P_ID.matcher(feats);
+                int tokenId = 0;
+                if (mID.find()) {
+                    tokenId = Integer.parseInt(mID.group(0).substring(3));   //Find regex "nr:[0-9]+" in features
+                }
+                else {
+                    System.err.printf("No ID found in article %s", fileId);
+                }
+                String sectionId = fileId + "_" + tokenId;
+
+                // At end of previous section, add counts to metadata
+                if (!previousSectionId.equals(sectionId) && !firstIter) {
+                    newsMetadata.get(previousSectionId).addAll(Arrays.asList(Integer.toString(sentenceCount), Integer.toString(tokenCount)));
+                }
+
+                // Encountered new section
+                if (!sectionIds.contains(sectionId)) {
+                    sectionIds.add(sectionId);
+                    sectionIdx = sectionIds.size()-1;
+                    fileContent.add(new HashMap());
+
+                    List<String> metadata = new ArrayList();
+                    metadata.add(newsDate);
+                    newsMetadata.putIfAbsent(sectionId, metadata);
+
+                    sentenceCount = 0;
+                    tokenCount = 0;
+                    previousSectionId = sectionId.toString();
+
+                    firstIter = false;
+                }
+                sentenceCount++;
+                tokenCount += sent.size();
+
+                Map<String, Integer> wordFrequencies = fileContent.get(sectionIdx);
+
+                for (Token token : sent) {
+                    String value = layer == Layer.LEMMA ?
+                            token.getLemma().or("_") :
+                            token.getForm().or("_");
+                    if (stopwords.contains(value.toLowerCase())) {
+                        continue;
+                    }
+
+                    // Exclude all words except proper nouns or proper and common nouns
+                    if (!(token.getPosTag().or("_").equals("NN")||token.getPosTag().or("_").equals("NE"))) {
+                        continue;
+                    }
+
+                    if (!wordFrequencies.containsKey(value)) {
+                        wordFrequencies.putIfAbsent(value, 1);
+                    }
+                    else {
+                        wordFrequencies.put(value, wordFrequencies.get(value)+1);
+                    }
+                }
+            }
+            // Add counts of last section
+            newsMetadata.get(previousSectionId).addAll(Arrays.asList(Integer.toString(sentenceCount),Integer.toString(tokenCount)));
+
+        }
+    }
+
+
+    /**
+     *
+     * @param conllFile The article file in CONLL format
+     * @throws IOException
+     */
+    //@Override
+    public void processFileOrig(File conllFile) throws IOException {
+        fileContent = new ArrayList();
+        sectionIds = new ArrayList();
+
         String fileId = conllFile.getName();
 
         int sentenceCount = 0;
