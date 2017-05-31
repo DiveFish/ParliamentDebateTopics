@@ -28,6 +28,8 @@ public class KMeansClustering {
     
     private static double cosine;
 
+    private final int NUM_OF_ITER = 3;
+
 
     public KMeansClustering(int numOfClusters, Matrix documentVectors, Random random) {
         this.numOfClusters = numOfClusters;
@@ -129,7 +131,7 @@ public class KMeansClustering {
             centroids.add(documentVectors.getRow(doc));
         }
 
-        for (int iter = 0; iter < 3; iter++) {
+        for (int iter = 0; iter < NUM_OF_ITER; iter++) {
             double objective = 0;
             TDoubleList cosineSimilarities = new TDoubleArrayList();
 
@@ -171,8 +173,8 @@ public class KMeansClustering {
             centroids = adjustedCentroids;
             cosine = objective / documentVectors.rows();
             System.out.printf("Average cosine similarity %s: %s%n", iter+1, cosine);
-            if (iter == 2) {
-                System.out.println("Cluster cosine similarities:");
+            if (iter == NUM_OF_ITER-1) {
+                System.out.println("Single cosine similarities:");
                 for (int i = 0; i < cosineSimilarities.size(); i++) {
                     System.out.println(cosineSimilarities.get(i));
                 }

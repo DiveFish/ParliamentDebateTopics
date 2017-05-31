@@ -82,7 +82,7 @@ public class main {
         System.out.println("____________________\n");
         System.out.println("Best clustering");
         System.out.println("____________________");
-        List<TIntList> bestClusters = kmc.nClusters(3); //TODO: change back to higher number of iteRATIOns after testing
+        List<TIntList> bestClusters = kmc.nClusters(3); //TODO: change back to higher number of iterations after testing
 
         for (TIntList cluster : bestClusters) {
             

@@ -69,92 +69,82 @@ public class ReaderTaz implements Reader {
 
         String fileId = conllFile.getName();
 
-        int sentenceCount = 0;
-        int tokenCount = 0;
-
-        String previousSectionId = "";
-        boolean firstIter = true;
-
-        int sectionIdx = 0;
-
         //System.err.println(String.format("Processing file %s", fileId));
+
+        Map<String, List<Sentence>> articleCollection = new HashMap();
+        String newsDate = "";
+        boolean foundDate = false;
 
         try (CONLLReader conllReader = new CONLLReader(new BufferedReader(new InputStreamReader(new GZIPInputStream(
                 new FileInputStream(conllFile)))))) {
             for (Sentence sentence = conllReader.readSentence(); sentence != null; sentence = conllReader.readSentence()) {
-                List<Token> sent = sentence.getTokens();
 
-                String feats = sent.get(0).getFeatures().or("_");
+                String features = sentence.getTokens().get(0).getFeatures().or("_");
 
-                String newsDate = "";
-                Matcher md = P_DATE.matcher(feats);
-                if (md.find()) {
-                    newsDate =  md.group().substring(4);   //Find regex "dat: num{2}.num{2}.num{2}" in features
+                //Look for date only once, not for all tokens
+                if (!foundDate) {
+                    Matcher md = P_DATE.matcher(features);
+                    if (md.find()) {
+                        newsDate = md.group().substring(4);   //Find regex "dat: num{2}.num{2}.num{2}" in features
+                        foundDate = true;
+                    } else {
+                        System.err.printf("No date found in article %s", fileId);
+                    }
                 }
-                else {
-                    System.err.printf("No date found in article %s", fileId);
-                }
 
-                Matcher mID = P_ID.matcher(feats);
+                Matcher mID = P_ID.matcher(features);
                 int tokenId = 0;
                 if (mID.find()) {
                     tokenId = Integer.parseInt(mID.group(0).substring(3));   //Find regex "nr:[0-9]+" in features
-                }
-                else {
+                } else {
                     System.err.printf("No ID found in article %s", fileId);
                 }
                 String sectionId = fileId + "_" + tokenId;
 
-                // At end of previous section, add counts to metadata
-                if (!previousSectionId.equals(sectionId) && !firstIter) {
-                    newsMetadata.get(previousSectionId).addAll(Arrays.asList(Integer.toString(sentenceCount), Integer.toString(tokenCount)));
+                if (!articleCollection.containsKey(sectionId)) {
+                    articleCollection.putIfAbsent(sectionId, new ArrayList());
                 }
+                articleCollection.get(sectionId).add(sentence);
+            }
 
-                // Encountered new section
-                if (!sectionIds.contains(sectionId)) {
-                    sectionIds.add(sectionId);
-                    sectionIdx = sectionIds.size()-1;
+            for (Map.Entry<String, List<Sentence>> article : articleCollection.entrySet()) {
+                String articleId = article.getKey();
+                List<Sentence> sentences = article.getValue();
+
+                if (sentences.size() > 10) {
+                    sectionIds.add(articleId);
+                    int sectionIdx = sectionIds.size()-1;
+
                     fileContent.add(new HashMap());
+                    Map<String, Integer> wordFrequencies = fileContent.get(sectionIdx);
 
-                    List<String> metadata = new ArrayList();
-                    metadata.add(newsDate);
-                    newsMetadata.putIfAbsent(sectionId, metadata);
+                    int tokenCount = 0;
+                    for (Sentence sent : sentences) {
+                        for (Token token : sent.getTokens()) {
+                            tokenCount++;
 
-                    sentenceCount = 0;
-                    tokenCount = 0;
-                    previousSectionId = sectionId.toString();
+                            String value = layer == Layer.LEMMA ?
+                                    token.getLemma().or("_") :
+                                    token.getForm().or("_");
+                            if (stopwords.contains(value.toLowerCase())) {
+                                continue;
+                            }
 
-                    firstIter = false;
-                }
-                sentenceCount++;
-                tokenCount += sent.size();
+                            // Exclude all words except proper nouns or proper and common nouns
+                            if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE"))) {
+                                continue;
+                            }
 
-                Map<String, Integer> wordFrequencies = fileContent.get(sectionIdx);
-
-                for (Token token : sent) {
-                    String value = layer == Layer.LEMMA ?
-                            token.getLemma().or("_") :
-                            token.getForm().or("_");
-                    if (stopwords.contains(value.toLowerCase())) {
-                        continue;
+                            if (!wordFrequencies.containsKey(value)) {
+                                wordFrequencies.putIfAbsent(value, 1);
+                            } else {
+                                wordFrequencies.put(value, wordFrequencies.get(value) + 1);
+                            }
+                        }
                     }
-
-                    // Exclude all words except proper nouns or proper and common nouns
-                    if (!(token.getPosTag().or("_").equals("NN")||token.getPosTag().or("_").equals("NE"))) {
-                        continue;
-                    }
-
-                    if (!wordFrequencies.containsKey(value)) {
-                        wordFrequencies.putIfAbsent(value, 1);
-                    }
-                    else {
-                        wordFrequencies.put(value, wordFrequencies.get(value)+1);
-                    }
+                    newsMetadata.putIfAbsent(articleId, Arrays.asList(newsDate, Integer.toString(sentences.size()), Integer.toString(tokenCount)));
                 }
             }
-            // Add counts of last section
-            newsMetadata.get(previousSectionId).addAll(Arrays.asList(Integer.toString(sentenceCount),Integer.toString(tokenCount)));
-
         }
     }
 

@@ -112,12 +112,12 @@ public class ReaderPolMineCoNLLXML implements Reader {
                     //if (!token.getPosTag().or("_").equals("VVFIN") || token.getPosTag().or("_").equals("VVINF")
                     //        || token.getPosTag().or("_").equals("VVIZU")|| token.getPosTag().or("_").equals("VVPP")) {
                     // Adjectival
-                    if (!token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD")) {
+                    //if (!token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD")) {
                     // Nominal
                     //if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE")||token.getPosTag().or("_").equals("TRUNC"))) {
                     //COMBINED: NN, NE, TRUNC, ADJA, ADJD, CARD
-                    //if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE") || token.getPosTag().or("_").equals("TRUNC") ||
-                    //        token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD") || token.getPosTag().or("_").equals("CARD"))) {
+                    if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE") || token.getPosTag().or("_").equals("TRUNC") ||
+                            token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD") || token.getPosTag().or("_").equals("CARD"))) {
                             continue;
                     }
 
@@ -130,12 +130,16 @@ public class ReaderPolMineCoNLLXML implements Reader {
                 }
             }
             readDate(conllFile);
-            List<String> metadata = new ArrayList();
-            metadata.addAll(Arrays.asList(date, Integer.toString(sentenceCount), Integer.toString(tokenCount)));
-            debateMetadata.putIfAbsent(fileId, metadata);
+            debateMetadata.putIfAbsent(fileId, Arrays.asList(date, Integer.toString(sentenceCount), Integer.toString(tokenCount)));
         }
     }
 
+    /**
+     * Read date from xml file if CoNLL file does not provide dates.
+     *
+     * @param conllFile The CoNLL file of which to look for the respective xml equivalent
+     * @throws IOException
+     */
     private void readDate(File conllFile) throws IOException {
         try {
             SAXParser saxParser = parserFactory.newSAXParser();

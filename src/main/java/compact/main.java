@@ -19,7 +19,7 @@ import static compact.ClusterUtils.*;
  * @author Patricia Fischer
  */
 public class main {
-    private static final int NUM_OF_CLUSTERS = 60; //800 //3000;
+    private static final int NUM_OF_CLUSTERS = 1; //800 //3000;
 
     private static final int NUM_OF_BITS = 1200;
 
@@ -30,10 +30,10 @@ public class main {
         String corpus;
         File directory;
         String storageDirectory;
-        storageDirectory = "/home/patricia/Dokumente/Bachelorarbeit/Results/taz/Samples/";
+        //storageDirectory = "/home/patricia/Dokumente/Bachelorarbeit/Results/taz/Samples/";
         
-        corpus = "taz";
-        directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz-sample1/");  // 12 files -> 677 sections
+        //corpus = "taz";
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz-sample3/");  // 12 files -> 677 sections (309 for articles >10 sentences)
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz/");
 
         //corpus = "PolMine";
@@ -42,13 +42,15 @@ public class main {
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/test/");
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-conll-xml/");
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-conll-xml-sample/");
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-conll-xml-minisample/");
 
         if (args.length != 3) {
             System.err.println("Wrong number of arguments.Usage: 3, provide name of dataset (Polmine/Taz), path to data files and path for storage");
         }
-        //corpus = args[0].toLowerCase();
-        //directory = new File(args[1]);
-        //storageDirectory = args[2];
+
+        corpus = args[0].toLowerCase();
+        directory = new File(args[1]);
+        storageDirectory = args[2];
 
 
         ///*-->

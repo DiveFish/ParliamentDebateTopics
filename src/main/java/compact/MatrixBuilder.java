@@ -18,14 +18,12 @@ public class MatrixBuilder {
 
     private static final Layer LAYER = Layer.LEMMA;  //TOKEN or LEMMA
 
-    private static final int STOPWORD_LIST_SIZE = 400;//150;
-
     public Vocabulary buildVocabulary(String corpus, File directory) throws IOException {
         String fileExtension = getExtension(corpus);
         Reader read = getReader(corpus, LAYER);
         List<File> files = getFiles(corpus, directory, fileExtension);
 
-        Vocabulary vocabulary = new Vocabulary(LAYER);
+        Vocabulary vocabulary = new Vocabulary();
 
         int filesDone = 0;
         for (File file : files) {

@@ -42,23 +42,16 @@ public class Vocabulary {
      * Vocabulary can be created on lemmas or tokens.
      * Layer LEMMA will lemmatize the input text and process word types.
      * Layer TOKEN will skip lemmatization and process the input by tokens.
-     * 
-     * @param layer The layer of word extraction
      */
     
-    public Vocabulary(Layer layer) {
+    public Vocabulary() {
         documentIndices = HashBiMap.create();
         tokenIndices = HashBiMap.create();
         tokenCounts = new TIntArrayList();
         documentFrequencies = new TIntArrayList();
         dateIds = new HashMap();
     }
-    
-    // processFile()
-    // extractFileID()
-    // extractVocabulary()
-    // <- input: List<Map<String, Integer>>; List<String> = wordFrequencies and file IDs
-    
+
     /**
      * Process content of each debate section and save file ID.
      * 
@@ -96,6 +89,9 @@ public class Vocabulary {
             } else {
                 documentFrequencies.set(index, documentFrequencies.get(index) + 1);
             }
+            //System.out.println("tc\n"+tokenCounts);
+            //System.out.println("ti\n"+tokenIndices);
+            //System.out.println("df\n"+documentFrequencies);
         }
     }
     
