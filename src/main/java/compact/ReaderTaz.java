@@ -214,7 +214,7 @@ public class ReaderTaz implements Reader {
 
                     sentenceCount = 0;
                     tokenCount = 0;
-                    previousSectionId = sectionId.toString();
+                    previousSectionId = sectionId;
 
                     firstIter = false;
                 }
