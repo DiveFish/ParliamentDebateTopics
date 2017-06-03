@@ -64,7 +64,7 @@ public class main {
 
 
 
-        ///*-->
+        /*-->
 
         System.out.println("_________________________");
         System.out.println("Retrieving k-means clusters");
@@ -143,6 +143,8 @@ public class main {
         Storage store = new Storage(storageDirectory);
         store.setStorageInfo(info);
         store.serialize();
+        -->*/
+
         /*
         store.deserialize();
 
@@ -155,7 +157,7 @@ public class main {
 */
 
 
-/*
+
         System.out.println("_________________________");
         System.out.printf("Hashing %d vectors...\n", vocabulary.documentIndices().size());
         System.out.println("_________________________");
@@ -178,7 +180,7 @@ public class main {
             }
             else {
                 // Earliest doc in cluster
-                System.out.println(documentIndicesInverted.get(kmc.earliestDoc(vocabulary.documentDates(), cluster)));
+                System.out.println(documentIndicesInverted.get(earliestDoc(vocabulary.documentDates(), cluster)));
 
                 TIntSet sharedTerms = tdm.partiallySharedTerms(cluster, ratio);
 
@@ -189,7 +191,7 @@ public class main {
             }
             System.out.println();
         }
-*/
+
         //-->*/
 
 
