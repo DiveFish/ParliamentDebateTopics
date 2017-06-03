@@ -21,7 +21,7 @@ import static compact.ClusterUtils.*;
 public class main {
     private static final int NUM_OF_CLUSTERS = 100; //800 //3000;
 
-    private static final int NUM_OF_BITS = 200; //1024 --> 528 --> 2048
+    private static final int NUM_OF_BITS = 1200; //1024 --> 528 --> 2048
 
     private static double ratio = 0.3;
 
@@ -30,11 +30,11 @@ public class main {
         String corpus;
         File directory;
         String storageDirectory;
-        storageDirectory = "/home/patricia/Dokumente/Bachelorarbeit/Results/taz/Samples/";
+        //storageDirectory = "/home/patricia/Dokumente/Bachelorarbeit/Results/taz/Samples/";
         
-        corpus = "taz";
-        directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz-sample1/");  // 12 files -> 677 sections (309 for articles >10 sentences)
-        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz/");
+        //corpus = "taz";
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz-sample1/");  // 12 files -> 677 sections (309 for articles >10 sentences)
+        //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/taz/"); //647413 sections for articles >10 sentences
 
         //corpus = "PolMine";
         //directory = new File("/home/patricia/Dokumente/Bachelorarbeit/Corpora/bundesparser-xml-tokenized/"); // 984 debates -> 215.080 sections
@@ -47,11 +47,11 @@ public class main {
         if (args.length != 3) {
             System.err.println("Wrong number of arguments.Usage: 3, provide name of dataset (Polmine/Taz), path to data files and path for storage");
         }
-/*
+
         corpus = args[0].toLowerCase();
         directory = new File(args[1]);
         storageDirectory = args[2];
-*/
+
 
         ///*-->
         MatrixBuilder mb = new MatrixBuilder();

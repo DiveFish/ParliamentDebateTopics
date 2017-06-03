@@ -130,8 +130,19 @@ public class ReaderTaz implements Reader {
                                 continue;
                             }
 
-                            // Exclude all words except proper nouns or proper and common nouns
-                            if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE"))) {
+                            // Other
+                            //if (!token.getPosTag().or("_").equals("CARD") || token.getPosTag().or("_").equals("FM")
+                            //        || token.getPosTag().or("_").equals("XY")) {
+                            // Verbal
+                            //if (!token.getPosTag().or("_").equals("VVFIN") || token.getPosTag().or("_").equals("VVINF")
+                            //        || token.getPosTag().or("_").equals("VVIZU")|| token.getPosTag().or("_").equals("VVPP")) {
+                            // Adjectival
+                            //if (!token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD")) {
+                            // Nominal
+                            //if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE")||token.getPosTag().or("_").equals("TRUNC"))) {
+                            //COMBINED: NN, NE, TRUNC, ADJA, ADJD, CARD
+                            if (!(token.getPosTag().or("_").equals("NN") || token.getPosTag().or("_").equals("NE") || token.getPosTag().or("_").equals("TRUNC") ||
+                                    token.getPosTag().or("_").equals("ADJA") || token.getPosTag().or("_").equals("ADJD") || token.getPosTag().or("_").equals("CARD"))) {
                                 continue;
                             }
 
