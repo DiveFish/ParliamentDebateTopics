@@ -21,7 +21,7 @@ import static compact.ClusterUtils.*;
 public class main {
     private static final int NUM_OF_CLUSTERS = 100; //800 //3000;
 
-    private static final int NUM_OF_BITS = 1200; //1024 --> 528 --> 2048
+    private static final int NUM_OF_BITS = 200; //1024 --> 528 --> 2048
 
     private static double ratio = 0.3;
 
