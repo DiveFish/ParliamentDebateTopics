@@ -25,6 +25,7 @@ public class KMeansHashClustering {
 
     private static double hammingDistance;
 
+    private final int NUM_OF_ITER = 5;
 
     public KMeansHashClustering(int numOfClusters, HashedDocuments documentVectors, Random random) {
         this.numOfClusters = numOfClusters;
@@ -79,7 +80,7 @@ public class KMeansHashClustering {
 
             for (int i = 0; i < centroids.size(); i++) {
 
-                BitSet hammingBits = documentHashes.get(row);
+                BitSet hammingBits = (BitSet) documentHashes.get(row).clone();
                 hammingBits.xor(centroids.get(i)); // which bits are different?
                 double distance = hammingBits.cardinality(); // number of bits set to true/ Hamming distance
 
@@ -116,7 +117,8 @@ public class KMeansHashClustering {
             throw new IOException("Trying to extract more clusters than matrix has elements");
         }
 
-        long bitSetSize = documentHashes.get(0).size();
+//        int bitSetSize = (int) documentHashes.get(0).size();
+        int bitSetSize = documentVectors.getHashLength();
         int numOfDocs = documentHashes.size();
 
         // Choose random centroids from document vectors
@@ -130,24 +132,24 @@ public class KMeansHashClustering {
             centroids.add(documentHashes.get(doc));
         }
 
-        for (int iter = 0; iter < 3; iter++) {
+        for (int iter = 0; iter < NUM_OF_ITER; iter++) {
             double objective = 0;
             TDoubleList hammingDistances = new TDoubleArrayList();
 
             int[] numOfClusterElements = new int[numOfClusters];
             List<int[]> adjustedCentroids = new ArrayList<>();
             for (int i = 0; i < centroids.size(); i++) {
-                adjustedCentroids.add(new int[(int) bitSetSize]);
+                adjustedCentroids.add(new int[bitSetSize]);
             }
 
-            System.out.println("Iteration...");
+            System.out.println("Iterating...");
 
             // Assign vectors to their closest centroid
             for (int row = 0; row < numOfDocs; row++) {
 
                 double minimum = Double.MAX_VALUE;
                 int idx = -1;
-                BitSet bitSetRow = documentHashes.get(row);
+                BitSet bitSetRow = documentHashes.get(row); //the current row
 
                 // Compute distance between current row and centroids to find closest centroid
                 for (int i = 0; i < centroids.size(); i++) {
@@ -162,7 +164,7 @@ public class KMeansHashClustering {
                     }
                 }
 
-                // Track how often bit at position bitIdx is set
+                // Track how often bit at position bitIdx is set to 1
                 int[] rowBitFreqs = adjustedCentroids.get(idx);
                 // For all set bits (true/1), add 1 to respective adjustedCentroid int[]
                 for (int bitIdx = bitSetRow.nextSetBit(0); bitIdx >= 0; bitIdx = bitSetRow.nextSetBit(bitIdx+1)) {
@@ -184,20 +186,19 @@ public class KMeansHashClustering {
                 int clusterElements = numOfClusterElements[i];
                 centroids.set(i, new BitSet(bitSetSize));
                 for (int j = 0; j < adjustedCentroid.length; j++) {
-                    // If bit at position j is more often set to 1 than not, set it in centroid
+                    // If bit at position j is more often set to 1 than not, set it in centroid (ties go towards 0)
                     if (clusterElements > 0) {
-                        if (adjustedCentroid[j] >= clusterElements/2) { //int tieCounter: increase whenever there is a tie; once set bit to 1, other time set bit to 0
+                        if (adjustedCentroid[j] > clusterElements/2) { //int tieCounter: increase whenever there is a tie; once set bit to 1, other time set bit to 0
                             centroids.get(i).set(j);
                         }
                     }
                 }
             }
-            System.out.println("Centroids\n"+centroids);
-
-            hammingDistance = objective / documentHashes.size();
+            System.out.println(documentHashes.size());
+            hammingDistance = objective / numOfDocs;
             System.out.printf("Average hammingDistance %s: %s%n", iter+1, hammingDistance);
-            if (iter == 2) {
-                System.out.println("Cluster hamming distances:\n"+hammingDistances.toString()+"\n");
+            if (iter == NUM_OF_ITER-1) {
+                System.out.printf("Single hamming distances ("+ bitSetSize+"):\n"+hammingDistances.toString()+"\n");
             }
         }
 
