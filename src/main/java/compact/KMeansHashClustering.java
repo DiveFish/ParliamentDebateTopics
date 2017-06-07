@@ -67,6 +67,8 @@ public class KMeansHashClustering {
      */
     public List<TIntList> clusters(List<BitSet> centroids) {
 
+        double bitSetSize = documentVectors.getHashLength();
+
         List<TIntList> clusters = new ArrayList<>(centroids.size());
         for (int i = 0; i < numOfClusters; i++) {
             clusters.add(new TIntArrayList());
@@ -82,7 +84,7 @@ public class KMeansHashClustering {
 
                 BitSet hammingBits = (BitSet) documentHashes.get(row).clone();
                 hammingBits.xor(centroids.get(i)); // which bits are different?
-                double distance = hammingBits.cardinality(); // number of bits set to true/ Hamming distance
+                double distance = (hammingBits.cardinality()/bitSetSize); // number of bits set to true/ Hamming distance
 
                 if (distance < minDistance) {
                     minDistance = distance;
@@ -156,7 +158,7 @@ public class KMeansHashClustering {
 
                     BitSet hammingBits = (BitSet) bitSetRow.clone();
                     hammingBits.xor(centroids.get(i));
-                    double distance = hammingBits.cardinality();
+                    double distance = (hammingBits.cardinality() / (double) bitSetSize);
 
                     if (distance < minimum) {
                         minimum = distance;
