@@ -196,7 +196,7 @@ public class KMeansHashClustering {
                     }
                 }
             }
-            System.out.println(documentHashes.size());
+
             hammingDistance = objective / numOfDocs;
             System.out.printf("Average hammingDistance %s: %s%n", iter+1, hammingDistance);
             if (iter == NUM_OF_ITER-1) {
