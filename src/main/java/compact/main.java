@@ -3,6 +3,7 @@ package compact;
 import com.carrotsearch.hppc.BitSet;
 import com.google.common.collect.BiMap;
 import gnu.trove.list.TIntList;
+import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.TIntSet;
 import org.apache.commons.math3.random.MersenneTwister;
 import org.la4j.Vector;
@@ -13,15 +14,16 @@ import java.io.IOException;
 import java.util.*;
 
 import static compact.ClusterUtils.*;
+import static compact.HashUtils.getBestHammingDistance;
 
 /**
  *
  * @author Patricia Fischer
  */
 public class main {
-    private static final int NUM_OF_CLUSTERS = 100; //800 //3000;
+    private static final int NUM_OF_CLUSTERS = 100; //800 //3000; for PolMine 100 and 250, for taz 65000 and 160000
 
-    private static final int NUM_OF_BITS = 1200; //1024 --> 528 --> 2048
+    private static final int NUM_OF_BITS = 1024; //2048 --> 1024 --> 512 --> 256
 
     private static double ratio = 0.3;
 
@@ -52,7 +54,6 @@ public class main {
         directory = new File(args[1]);
         storageDirectory = args[2];
 
-
         ///*-->
         MatrixBuilder mb = new MatrixBuilder();
         Vocabulary vocabulary = mb.buildVocabulary(corpus, directory);
@@ -61,8 +62,6 @@ public class main {
         //-->*/
 
         //tdm.svd();
-
-
 
         /*-->
 
@@ -95,7 +94,6 @@ public class main {
 
                 ratio = 0.5;
                 System.out.printf("--%f ratio--\n", ratio);
-                //TIntSet sharedTerms = tdm.sharedTerms(cluster);
                 sharedTerms = tdm.partiallySharedTerms(cluster, ratio);
 
                 System.out.println(cluster);
@@ -106,7 +104,6 @@ public class main {
 
                 ratio = 0.7;
                 System.out.printf("--%f ratio--\n", ratio);
-                //TIntSet sharedTerms = tdm.sharedTerms(cluster);
                 sharedTerms = tdm.partiallySharedTerms(cluster, ratio);
 
                 System.out.println(cluster);
@@ -117,7 +114,6 @@ public class main {
 
                 ratio = 1.0;
                 System.out.printf("--%f ratio--\n", ratio);
-                //TIntSet sharedTerms = tdm.sharedTerms(cluster);
                 sharedTerms = tdm.partiallySharedTerms(cluster, ratio);
 
                 System.out.println(cluster);
@@ -128,7 +124,9 @@ public class main {
             System.out.println();
         }
 
+        -->*/
 
+        /*
 
         //Serialize/deserialize
 
@@ -143,9 +141,7 @@ public class main {
         Storage store = new Storage(storageDirectory);
         store.setStorageInfo(info);
         store.serialize();
-        -->*/
 
-        /*
         store.deserialize();
 
         info.serializableToMatrix();
@@ -154,14 +150,17 @@ public class main {
         System.out.println("CENTROIDS   Rows/#centroids: "+info.getCentroids().size()+", columns/#words: "+info.getCentroids().get(0).length());
         System.out.println("First doc date: "+info.getDocumentDates().get(0));
         System.out.println("First doc filename: "+info.getDocumentIndices().inverse().get(0));
-*/
 
+        */
 
+        ///* -->
 
         System.out.println("_________________________");
         System.out.printf("Hashing %d vectors...\n", vocabulary.documentIndices().size());
         System.out.println("_________________________");
         RandomProjectionHash rph = new RandomProjectionHash(new MersenneTwister(42), vocabulary.tokenIndices().size(), NUM_OF_BITS); //bits: 1024
+        //System.out.println("Vocab size: "+vocabulary.tokenIndices().size());
+        //System.out.println("Matrix row length: "+tdm.counts().getRow(0).length());
         List<BitSet> hashes = new ArrayList<>();
         for (int i = 0; i < tdm.counts().rows(); i++) {
             SparseVector row = tdm.counts().getRow(i).toSparseVector();
@@ -182,7 +181,35 @@ public class main {
                 // Earliest doc in cluster
                 System.out.println(documentIndicesInverted.get(earliestDoc(vocabulary.documentDates(), cluster)));
 
+                System.out.printf("--%f ratio--\n", ratio);
                 TIntSet sharedTerms = tdm.partiallySharedTerms(cluster, ratio);
+
+                System.out.println(cluster);
+                for (Integer c : cluster.toArray()) {
+                    tdm.nMostRelevantTerms(tdm.counts().getRow(c).toSparseVector(), 10, vocabulary.tokenIndices(), sharedTerms);
+                }
+
+                ratio = 0.5;
+                System.out.printf("--%f ratio--\n", ratio);
+                sharedTerms = tdm.partiallySharedTerms(cluster, ratio);
+
+                System.out.println(cluster);
+                for (Integer c : cluster.toArray()) {
+                    tdm.nMostRelevantTerms(tdm.counts().getRow(c).toSparseVector(), 10, vocabulary.tokenIndices(), sharedTerms);
+                }
+
+                ratio = 0.7;
+                System.out.printf("--%f ratio--\n", ratio);
+                sharedTerms = tdm.partiallySharedTerms(cluster, ratio);
+
+                System.out.println(cluster);
+                for (Integer c : cluster.toArray()) {
+                    tdm.nMostRelevantTerms(tdm.counts().getRow(c).toSparseVector(), 10, vocabulary.tokenIndices(), sharedTerms);
+                }
+
+                ratio = 1.0;
+                System.out.printf("--%f ratio--\n", ratio);
+                sharedTerms = tdm.partiallySharedTerms(cluster, ratio);
 
                 System.out.println(cluster);
                 for (Integer c : cluster.toArray()) {
@@ -192,8 +219,32 @@ public class main {
             System.out.println();
         }
 
+
         //-->*/
 
+        /*
+        TIntList numsOfBits = new TIntArrayList();
+        numsOfBits.add(128);
+        numsOfBits.add(256);
+        numsOfBits.add(512);
+        numsOfBits.add(1024);
+        numsOfBits.add(2048);
+        numsOfBits.add(4096);
+
+        for (int bits : numsOfBits.toArray()) {
+            System.out.printf("Number of bits: %d\n", bits);
+            RandomProjectionHash rph = new RandomProjectionHash(new MersenneTwister(42), vocabulary.tokenIndices().size(), bits); //bits: 1024
+            List<BitSet> hashes = new ArrayList<>();
+            for (int i = 0; i < tdm.counts().rows(); i++) {
+                SparseVector row = tdm.counts().getRow(i).toSparseVector();
+                BitSet hash = rph.hashVector(row);
+                hashes.add(hash);
+            }
+            HashedDocuments hashedDocuments = new HashedDocuments(vocabulary.documentIndices(), hashes, bits);
+            getBestHammingDistance(tdm.counts(), hashedDocuments.getDocumentHashes());
+        }
+
+        */
 
 /*
         //Remainder of main() is meant for deserializing information from existing storage.ser

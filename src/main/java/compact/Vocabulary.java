@@ -37,13 +37,7 @@ public class Vocabulary {
     private final TIntList documentFrequencies; //stores for each term the documents in which it occurs
     
     private final Map<Integer, Date> dateIds;
-    
-    /**
-     * Vocabulary can be created on lemmas or tokens.
-     * Layer LEMMA will lemmatize the input text and process word types.
-     * Layer TOKEN will skip lemmatization and process the input by tokens.
-     */
-    
+
     public Vocabulary() {
         documentIndices = HashBiMap.create();
         tokenIndices = HashBiMap.create();

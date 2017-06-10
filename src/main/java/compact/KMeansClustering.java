@@ -141,7 +141,7 @@ public class KMeansClustering {
                 adjustedCentroids.add(SparseVector.zero(vectorLength));
             }
 
-            System.err.println("Iteration...");
+            System.err.println("Iterating...");
 
             // Assign vectors to their closest centroid
             for (int row = 0; row < numOfDocs; row++) {
@@ -171,7 +171,7 @@ public class KMeansClustering {
             }
 
             centroids = adjustedCentroids;
-            cosine = objective / documentVectors.rows();
+            cosine = objective / numOfDocs;
             System.out.printf("Average cosine similarity %s: %s%n", iter+1, cosine);
             if (iter == NUM_OF_ITER-1) {
                 System.out.println("Single cosine similarities:");

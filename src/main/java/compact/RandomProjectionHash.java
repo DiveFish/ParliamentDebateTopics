@@ -37,17 +37,27 @@ public class RandomProjectionHash {
     public BitSet hashVector(SparseVector vector) {
         int vecLen = hashes.length / bits;
         Preconditions.checkArgument(vector.length() == vecLen,
-                String.format("Vectors should have length %d, has %d", vecLen, vector.length()));
+                String.format("Vector should have length %d, has %d", vecLen, vector.length()));
 
         BitSet hash = new BitSet(bits);
 
         for (int i = 0; i < bits; ++i) {
+            //Calculate dot product between term vector and hash vector (skip 0 values)
+            VectorIterator vIter = vector.nonZeroIterator();
+            double dp = 0;
+            while(vIter.hasNext()) {
+                dp += vIter.next() * hashes[i * vecLen + vIter.index()];  //i*vecLen -> get to hashes part of current vector; vIter.index() -> current vector component
+            }
+
+            //If dot product is larger than zero, set bit to 1
+            if (dp >= 0) {
+                hash.set(i);
+            }
+
 
             //function calls for every non-zero component of vector
             //computing dot-product
-            //current non-zero vector component
-            //non-zero compontent of
-            //j is component
+            //current non-zero vector component j
             //call function for every non-zero vector component
 
             /*
@@ -56,19 +66,6 @@ public class RandomProjectionHash {
                 return val;
             });
             */
-
-
-            //Calculate dot product between term vector and hash vector (skip 0 values)
-            VectorIterator vIter = vector.nonZeroIterator();
-            double dp = 0;
-            while(vIter.hasNext()) {
-                dp += vIter.next() * hashes[i * vecLen + vIter.index()];
-            }
-
-            //If dot product is larger than zero, set bit to 1
-            if (dp >= 0) {
-                hash.set(i);
-            }
         }
 
         return hash;

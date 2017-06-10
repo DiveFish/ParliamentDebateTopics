@@ -25,7 +25,7 @@ public class KMeansHashClustering {
 
     private static double hammingDistance;
 
-    private final int NUM_OF_ITER = 5;
+    private final int NUM_OF_ITER = 3;
 
     public KMeansHashClustering(int numOfClusters, HashedDocuments documentVectors, Random random) {
         this.numOfClusters = numOfClusters;
@@ -200,7 +200,7 @@ public class KMeansHashClustering {
             hammingDistance = objective / numOfDocs;
             System.out.printf("Average hammingDistance %s: %s%n", iter+1, hammingDistance);
             if (iter == NUM_OF_ITER-1) {
-                System.out.printf("Single hamming distances ("+ bitSetSize+"):\n"+hammingDistances.toString()+"\n");
+                System.out.printf("Single hamming distances ("+ bitSetSize+" bits):\n"+hammingDistances.toString()+"\n");
             }
         }
 
