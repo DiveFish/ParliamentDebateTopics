@@ -6,10 +6,8 @@ import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
 import org.la4j.matrix.SparseMatrix;
 
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 /**
  * Utility class for finding the best number of bits for the document hashes.
@@ -17,6 +15,49 @@ import java.util.Set;
  * @author Patricia Fischer
  */
 public class HashUtils {
+
+    public static void main(String[] args) throws FileNotFoundException {
+        File dir = new File("/home/patricia/Dokumente/Bachelorarbeit/Results/PolMine/binary/hammingDistances_scaled");
+        hammingDistanceToSimilarity(dir);
+    }
+
+    public static void hammingDistanceToSimilarity(File directory) throws FileNotFoundException {
+        for (File file: directory.listFiles()) {
+            List<Double> hammingSimilarities = new ArrayList();
+            try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                String line = br.readLine(); // skip heading
+                while ((line = br.readLine()) != null) {
+                    double hammingSimilarity = scaleAndConvertHammingDistance(Double.parseDouble(line.trim()));
+                    hammingSimilarities.add(hammingSimilarity);
+                }
+
+                String fileName = "/home/patricia/Dokumente/Bachelorarbeit/Results/PolMine/binary/hammingDistances_scaled/"+file.getName().substring(0,file.getName().length()-4);
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(fileName+"_scaled.txt"))));
+                writer.write("hamming_similarity\n");
+                for (Double hammSim : hammingSimilarities) {
+                    writer.write(Double.toString(hammSim)+"\n");
+                }
+
+                writer.close();
+            }
+            catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+        }
+
+    }
+
+    /**
+     * Values from a range between -1 and 1 are scaled into range 0 to 1.
+     * To convert hamming distance to hamming similairity, the scaled
+     * values are subtracted from 1.
+     *
+     * @param hammingDistance The hamming distance to be scaled and converted
+     * @return The scaled hamming similarity
+     */
+    private static double scaleAndConvertHammingDistance(Double hammingDistance) {
+        return 1.0-((hammingDistance+1.0)/2.0);
+    }
 
     /**
      * Calculate the correlation between cosine and hamming similarities.
