@@ -144,7 +144,7 @@ public class KMeansHashClustering {
                 adjustedCentroids.add(new int[bitSetSize]);
             }
 
-            System.out.println("Iterating...");
+            System.err.println("Iterating...");
 
             // Assign vectors to their closest centroid
             for (int row = 0; row < numOfDocs; row++) {
@@ -200,7 +200,12 @@ public class KMeansHashClustering {
             hammingDistance = objective / numOfDocs;
             System.out.printf("Average hammingDistance %s: %s%n", iter+1, hammingDistance);
             if (iter == NUM_OF_ITER-1) {
-                System.out.printf("Single hamming distances ("+ bitSetSize+" bits):\n"+hammingDistances.toString()+"\n");
+                System.out.println("Single hamming distances ("+ bitSetSize+" bits):");
+                for (int i = 0; i < hammingDistances.size(); i++) {
+                    System.out.println(hammingDistances.get(i));
+                }
+                System.out.println();
+                //System.out.printf("Single hamming distances ("+ bitSetSize+" bits):\n"+hammingDistances.toString()+"\n");
             }
         }
 

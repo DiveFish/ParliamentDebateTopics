@@ -4,7 +4,9 @@ import com.carrotsearch.hppc.BitSet;
 import com.google.common.base.Preconditions;
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
+import org.la4j.Matrix;
 import org.la4j.matrix.SparseMatrix;
+import org.la4j.vector.SparseVector;
 
 import java.io.*;
 import java.util.*;
@@ -21,13 +23,19 @@ public class HashUtils {
         hammingDistanceToSimilarity(dir);
     }
 
+    /**
+     * Convert hamming distance to similarity for all files containing the hamming distances.
+     *
+     * @param directory
+     * @throws FileNotFoundException
+     */
     public static void hammingDistanceToSimilarity(File directory) throws FileNotFoundException {
         for (File file: directory.listFiles()) {
             List<Double> hammingSimilarities = new ArrayList();
             try (BufferedReader br = new BufferedReader(new FileReader(file))) {
                 String line = br.readLine(); // skip heading
                 while ((line = br.readLine()) != null) {
-                    double hammingSimilarity = scaleAndConvertHammingDistance(Double.parseDouble(line.trim()));
+                    double hammingSimilarity = convertHammingDistance(Double.parseDouble(line.trim()));
                     hammingSimilarities.add(hammingSimilarity);
                 }
 
@@ -44,19 +52,77 @@ public class HashUtils {
                 System.err.println(e.getMessage());
             }
         }
-
     }
 
+
     /**
-     * Values from a range between -1 and 1 are scaled into range 0 to 1.
-     * To convert hamming distance to hamming similairity, the scaled
-     * values are subtracted from 1.
+     * Hamming distance values are subtracted from 1 to obtain hamming similarity.
      *
      * @param hammingDistance The hamming distance to be scaled and converted
      * @return The scaled hamming similarity
      */
-    private static double scaleAndConvertHammingDistance(Double hammingDistance) {
-        return 1.0-((hammingDistance+1.0)/2.0);
+    private static double convertHammingDistance(Double hammingDistance) {
+        return 1.0-hammingDistance;
+    }
+
+    /**
+     * Calculate for m documents the cosine similarity to all other documents, pick the n most
+     * similar documents and also calculate the hamming similarity for them. Compare the cosine
+     * and hamming similarity by their correlation and return the average of all correlations.
+     *
+     * ! Put numbers into thesis
+     *
+     * @param counts The tf-idf matrix
+     * @param documentHashes The documents as bit vectors
+     * @return The average correlation between cosine and hamming similarity
+     */
+    public static double getBestHammingDistance(SparseMatrix counts, List<BitSet> documentHashes) {
+        //1. Take a document d.
+        //2. Find the n documents that are the most similar to d according to cosine similarity.
+        //3. Compute (1) the cosine similarities of each document and d, (2) the hamming similarity of the hashed representations of each document and d. Storing both pairwise per document.
+        //4. Goto 1 until you have processed a reasonable number of documents.
+        TDoubleList averageCorrelation = new TDoubleArrayList();
+        normalizeDocumentVectors(counts);
+        for (int doc = 0; doc < counts.rows(); doc++) {
+            TDoubleList cosineSimilaritiesAll = new TDoubleArrayList();
+            for (int row = 0; row < counts.rows(); row++) {
+                //System.out.println("Cos: "+counts.getRow(doc).innerProduct(counts.getRow(row)));
+                cosineSimilaritiesAll.add(counts.getRow(doc).innerProduct(counts.getRow(row)));
+            }
+
+            Set<Integer> mostSimilar = mostSimilarDocuments(cosineSimilaritiesAll, 10); // get 15 most documents which are the most similar to current doc
+
+            TDoubleList cosineSimilarities = new TDoubleArrayList();
+            TDoubleList hammingSimilarities = new TDoubleArrayList();
+
+            for (int i : mostSimilar) {
+                BitSet hammingBits = (BitSet) documentHashes.get(i).clone();
+                hammingBits.xor(documentHashes.get(doc));
+                cosineSimilarities.add(cosineSimilaritiesAll.get(i));
+                hammingSimilarities.add(1-((double) hammingBits.cardinality()/(double) hammingBits.size())); // number of bits set to true/ Hamming distance
+            }
+            double corr = getCorrelation(cosineSimilarities, hammingSimilarities);
+            if (corr > 0) {
+                averageCorrelation.add(corr);
+            }
+        }
+
+        double averageCorr = averageCorrelation.sum()/averageCorrelation.size();
+        System.out.printf("Average correlation between cosine and hamming similarity: %s\n", averageCorr);
+
+        return averageCorr;
+    }
+
+    private static double norm(SparseVector v) {
+        // Euclidean norm in la4j uses BigDecimal, which has a lot of overhead.
+        return Math.sqrt(v.innerProduct(v));
+    }
+
+    private static void normalizeDocumentVectors(Matrix documentVectors) {
+        for (int i = 0; i < documentVectors.rows(); i++) {
+            SparseVector doc = documentVectors.getRow(i).toSparseVector();
+            documentVectors.setRow(i, doc.divide(norm(doc)));
+        }
     }
 
     /**
@@ -77,6 +143,9 @@ public class HashUtils {
                 String.format("List should be of same size, but are of sizes %d and %d", cosineSimilarities.size(), hammingSimilarities.size()));
 
         double sumX = cosineSimilarities.sum();
+        if (sumX == 0) {
+            return -1;
+        }
         double sumY = hammingSimilarities.sum();
         double sumXX = 0.0;
         double sumYY = 0.0;
@@ -101,50 +170,6 @@ public class HashUtils {
         // Correlation = normalized co-variation
         return cov / sigmaX / sigmaY;
     }
-
-    /**
-     * Calculate for m documents the cosine similarity to all other documents, pick the n most
-     * similar documents and also calculate the hamming similarity for them. Compare the cosine
-     * and hamming similarity by their correlation and return the average of all correlations.
-     *
-     * @param counts The tf-idf matrix
-     * @param documentHashes The documents as bit vectors
-     * @return The average correlation between cosine and hamming similarity
-     */
-    public static double getBestHammingDistance(SparseMatrix counts, List<BitSet> documentHashes) {
-        //1. Take a document d.
-        //2. Find the n documents that are the most similar to d according to cosine similarity.
-        //3. Compute (1) the cosine similarities of each document and d, (2) the hamming similarity of the hashed representations of each document and d. Storing both pairwise per document.
-        //4. Goto 1 until you have processed a reasonable number of documents.
-
-        TDoubleList averageCorrelation = new TDoubleArrayList();
-
-        for (int doc = 0; doc < 150; doc++) {
-            TDoubleList cosineSimilaritiesAll = new TDoubleArrayList();
-            for (int row = 0; row < counts.rows(); row++) {
-                cosineSimilaritiesAll.add(counts.getRow(doc).innerProduct(counts.getRow(row)));
-            }
-
-            Set<Integer> mostSimilar = mostSimilarDocuments(cosineSimilaritiesAll, 100); // get 15 most documents which are the most similar to current doc
-
-            TDoubleList cosineSimilarities = new TDoubleArrayList();
-            TDoubleList hammingSimilarities = new TDoubleArrayList();
-
-            for (int i : mostSimilar) {
-                BitSet hammingBits = (BitSet) documentHashes.get(i).clone();
-                hammingBits.xor(documentHashes.get(doc));
-                cosineSimilarities.add(cosineSimilaritiesAll.get(i));
-                hammingSimilarities.add(1-((double) hammingBits.cardinality()/(double) hammingBits.size())); // number of bits set to true/ Hamming distance
-            }
-            averageCorrelation.add(getCorrelation(cosineSimilarities, hammingSimilarities));
-        }
-
-        double averageCorr = averageCorrelation.sum()/averageCorrelation.size();
-        System.out.printf("Average correlation between cosine and hamming similarity: %s\n", averageCorr);
-
-        return averageCorr;
-    }
-
 
     /**
      * Find the n highest similarity scores and return their document indices.
